@@ -1,0 +1,8 @@
+name: "AGV"
+description: "Differential-drive AGV: odometry navigation with camera obstacle avoidance"
+ports:
+- 8888
+bricks:
+- opencv_camera_handler: {}
+- flask_video_webui: {}
+icon: none

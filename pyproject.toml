@@ -1,0 +1,24 @@
+[project]
+name = "vision-based-agv"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "arduino-app-bricks",
+    "arduino-router-bridge>=0.5.1",
+    "edge-impulse-linux>=1.2.2",
+    "flask>=3.1.3",
+    "opencv-python-headless>=4.13,<4.14",
+    "pytest>=9.1.1",
+]
+
+[tool.uv.sources]
+arduino-app-bricks = { git = "https://github.com/arduino/app-bricks-py" }
+
+[tool.basedpyright]
+extraPaths = ["bricks"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"

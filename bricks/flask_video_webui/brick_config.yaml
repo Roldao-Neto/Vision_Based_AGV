@@ -1,0 +1,7 @@
+id: flask_video_webui
+name: flask_video_webUI
+description: Simple flask web UI to stream Video frames
+version: 1.0.0
+author: Rolds
+dependencies:
+  - flask

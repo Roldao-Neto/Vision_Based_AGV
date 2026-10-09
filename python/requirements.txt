@@ -1,0 +1,3 @@
+opencv-python-headless
+edge_impulse_linux
+flask

@@ -1,0 +1,7 @@
+id: opencv_camera_handler
+name: opencv_camera_handler
+description: Simple camera handler using OpenCV to capture video frames and process them.
+version: 1.0.0
+author: Rolds
+dependencies:
+  - opencv-python-headless
