@@ -1,7 +1,5 @@
 # Arduino Uno Q - TCC - 07/05/2026
 
-
-
 Repo base usado: <https://github.com/Mjrovai/ARDUINO-UNO-Q>
 
 Outras fontes:
@@ -64,36 +62,19 @@ Outras fontes:
 
 - Servidor Remoto das IDEs consumem muita memória da placa.
 
-
-
 3 - ADB sobre USB-C:
 
 - Vantagens:
-
   - Existe documentação oficial da Arduino para fazer a conexão (
     <https://docs.arduino.cc/tutorials/uno-q/adb/> )
-
   - Não precisa de nenhuma conexão sem fio (menos consumo).
-
   - Não precisa estar conectado em produção.
 
 - Desvantagens:
-
   - Não pode usar os bricks prontos do App Lab
-
-  - O desenvolvimento é feito todo localmente e só depois deve 
-  
-  - Precisa pensar em um meio de extrair os dados da aplicação e do
-    estado da placa (provavelmente será feito armazenando e pegando os
-    resultados depois de rodar).
-    
+  - O desenvolvimento é feito todo localmente.
+  - Precisa pensar em um meio de extrair os dados da aplicação e do estado da placa (provavelmente será feito armazenando e pegando os resultados depois de rodar).
   - Desenvolvimento de código deve ser feito separado e fazer o deploy depois.
-
-
-
-**Abordagem Escolhida:** Opção 3 (ADB sobre USB-C)
-
-
 
 ## Passo a Passo do Setup:
 
@@ -153,7 +134,6 @@ sudo apt purge \
   libdjvulibre-text libdjvulibre21
 
 sudo apt autoremove --purge
-
 ```
 
 Resultado:
@@ -174,8 +154,6 @@ tmpfs            1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
 tmpfs            1.0M     0  1.0M   0% /run/credentials/getty@tty1.service
 tmpfs            1.0M     0  1.0M   0% /run/credentials/serial-getty@ttyMSM0.service
 ```
-
-
 
 # Configurando WiFi e Server SSH
 
@@ -203,31 +181,16 @@ ssh-copy-id arduino@<UNO_Q_IP_ADDRESS>
 ssh arduino@<UNO_Q_IP_ADDRESS>
 ```
 
-
-
 # Arduino App CLI Terminal
 
 Ao invés de usar App Lab, também é possível usar:
 
 ```bash
 arduino-app-cli app new "<name>"
-
 arduino-app-cli app list
-
 arduino-app-cli app start name
-
 arduino-app-cli app logs . --follow
-
 arduino-app-cli app stop name
-
 arduino-app-cli system cleanup
-
 arduino-app-cli system update
 ```
-
-
-
-
-
-
-

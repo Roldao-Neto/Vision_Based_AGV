@@ -2,8 +2,6 @@
 
 Data de início: 18/06/2026
 
-Após um longo período de prejuízo sem produzir diretamente no projeto do TCC, está na hora de parar com a documentação e fazer um sprint da parte de visão computacional para participar de uma apresentação do meu projeto em uma conferência na semana que vem. A estrutura desse documento vai seguir o roadmap dessa etapa e detalhar o que foi feito junto de cada uma das decisões tomadas.
-
  **Setup provisório para teste**:
 
 ![[obj_det_setup.png]]
