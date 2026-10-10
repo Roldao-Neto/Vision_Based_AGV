@@ -1,3 +1,4 @@
-opencv-python-headless
-edge_impulse_linux
-flask
+opencv-python-headless>=4.13,<4.14
+edge_impulse_linux==1.2.2
+six
+flask==3.1.3

@@ -35,6 +35,7 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 | `sketch/` | STM32 firmware (Arduino sketch, Zephyr core) |
 | `python/` | Linux application |
 | `bricks/` | Local App bricks: camera handler and Flask video UI |
+| `models/` | Edge Impulse `.eim` model (not versioned) |
 | `docs/` | Roadmap, wiring diagram, development logs |
 
 ## Setup and running
