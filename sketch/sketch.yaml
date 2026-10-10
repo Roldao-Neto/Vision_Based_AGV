@@ -1,7 +1,8 @@
 profiles:
   default:
-    fqbn:
+    fqbn: arduino:zephyr:unoq
     platforms:
       - platform: arduino:zephyr
-
+    libraries:
+      - dir: libraries/Arduino_RouterBridge
 default_profile: default

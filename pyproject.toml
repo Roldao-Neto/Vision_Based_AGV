@@ -16,10 +16,14 @@ dev = [
 ]
 
 [tool.uv.sources]
-arduino-app-bricks = { git = "https://github.com/arduino/app-bricks-py" }
+arduino-app-bricks = { git = "https://github.com/arduino/app-bricks-py", tag = "release/0.12.0" }
+
+[tool.pytest.ini_options]
+pythonpath = ["python"]
+testpaths = ["tests"]
 
 [tool.basedpyright]
-extraPaths = ["bricks"]
+extraPaths = ["bricks", "python"]
 venvPath = "."
 venv = ".venv"
 typeCheckingMode = "standard"

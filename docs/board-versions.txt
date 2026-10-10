@@ -1,0 +1,25 @@
+# Board software versions, recorded on Day 1 (2026-10-10), frozen until Day 7 is done.
+# deploy.sh compares the compile lines at the end of this file with the ones `app start` prints,
+# and stops the app if any differ. Update this file only on purpose.
+
+board: Arduino UNO Q (uno2GB), Debian GNU/Linux 13 (trixie), kernel 7.0.0-g122c2c22d838
+arduino-app-cli: 0.13.0 (daemon 0.13.0)
+arduino-router: 0.10.0
+arduino:zephyr platform: 1.0.0 (Zephyr 4.4.2-rc1)
+container image: ghcr.io/arduino/app-bricks/python-apps-base:0.12.0
+  digest: sha256:35eb218ee65c4886a2e0ead685ae8d16a68ecd6bc0a0dfc678669f69d7987a7a
+container Python: 3.13.14
+arduino_app_bricks: 0.12.0 (pinned in pyproject.toml as tag release/0.12.0)
+opencv-python-headless: 4.13.0+1ddb20b (from the image, pinned by its UV_CONSTRAINT)
+numpy: 2.5.1, msgpack: 1.2.1 (from the image)
+edge_impulse_linux: 1.2.2, flask: 3.1.3, six: 1.17.0 (from python/requirements.txt)
+rsync on the board: 3.5.0 (apt, installed on Day 1)
+
+# Printed by `arduino-app-cli app start` when it compiles the sketch:
+Board platform: arduino:zephyr (1.0.0) in /home/arduino/.arduino15/packages/arduino/hardware/zephyr/1.0.0
+Used library Arduino_RouterBridge (0.4.3) in /home/arduino/ArduinoApps/agv/sketch/libraries/Arduino_RouterBridge
+Used library Arduino_RPClite (0.3.1) in /home/arduino/.arduino15/internal/Arduino_RPClite_0.3.1_3aaf611bc915560f/Arduino_RPClite
+Used library MsgPack (0.4.2) in /home/arduino/.arduino15/internal/MsgPack_0.4.2_a0d4adc5044d022c/MsgPack
+Used library DebugLog (0.8.4) in /home/arduino/.arduino15/internal/DebugLog_0.8.4_c199e2cf6415ecc8/DebugLog
+Used library ArxTypeTraits (0.3.2) in /home/arduino/.arduino15/internal/ArxTypeTraits_0.3.2_d65e2aabfeed7838/ArxTypeTraits
+Used library ArxContainer (0.7.0) in /home/arduino/.arduino15/internal/ArxContainer_0.7.0_007f0bb2a1cdefe3/ArxContainer

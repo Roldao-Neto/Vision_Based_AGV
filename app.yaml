@@ -5,4 +5,4 @@ ports:
 bricks:
 - opencv_camera_handler: {}
 - flask_video_webui: {}
-icon: none
+icon: 🧭

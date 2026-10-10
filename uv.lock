@@ -4,10 +4,9 @@ requires-python = ">=3.13"
 
 [[package]]
 name = "arduino-app-bricks"
-version = "0.0.0"
-source = { git = "https://github.com/arduino/app-bricks-py#96521e1cd33b1811b527686dfa7379342dbf8c45" }
+version = "0.12.0"
+source = { git = "https://github.com/arduino/app-bricks-py?tag=release%2F0.12.0#7b1504fa79d6d05169aa286d53fe97c318499b2a" }
 dependencies = [
-    { name = "arduino-router-bridge" },
     { name = "msgpack" },
     { name = "pillow" },
     { name = "pyyaml" },
@@ -677,7 +676,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "arduino-app-bricks", git = "https://github.com/arduino/app-bricks-py" },
+    { name = "arduino-app-bricks", git = "https://github.com/arduino/app-bricks-py?tag=release%2F0.12.0" },
     { name = "arduino-router-bridge", specifier = ">=0.5.1" },
     { name = "edge-impulse-linux", specifier = "==1.2.2" },
     { name = "flask", specifier = "==3.1.3" },
