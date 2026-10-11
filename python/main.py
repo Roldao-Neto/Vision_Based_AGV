@@ -1,15 +1,15 @@
+import threading
 import time
 
-from arduino.app_utils import App
+from arduino.app_utils import App, Bridge
+from mcu_link import mission
+from telemetry import event, events_log, on_emergency, on_hook, on_status, status_log
 
-print("Hello world!")
+Bridge.provide("status", on_status)
+Bridge.provide("hook", on_hook)
+Bridge.provide("emergency", on_emergency)
+event("start", f"status={status_log.path.name} events={events_log.path.name}")
 
+threading.Thread(target=mission, name="mission", daemon=True).start()
 
-def loop():
-    """This function is called repeatedly by the App framework."""
-    # You can replace this with any code you want your App to run repeatedly.
-    time.sleep(10)
-
-
-# See: https://docs.arduino.cc/software/app-lab/tutorials/getting-started/#app-run
-App.run(user_loop=loop)
+App.run(user_loop=lambda: time.sleep(1))

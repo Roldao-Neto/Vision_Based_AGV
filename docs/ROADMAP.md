@@ -31,7 +31,7 @@ detecting obstacles with the camera and replanning around them on an occupancy g
   - add a scratch app in App Lab that uses `Arduino_RouterBridge` and copy what it generates; on current platforms that is no `libraries:` entry, since the libraries come with the platform (see `CLAUDE.md`, Current code state);
   - set `fqbn: arduino:zephyr:unoq`.
 - [x] Patched Bridge copy (see `CLAUDE.md`, Bridge limits and threading):
-  - copy `src/`, `library.properties` and `LICENSE` from the `Arduino_RouterBridge` 0.4.3 release tag into `sketch/libraries/Arduino_RouterBridge/`, and add `libraries: - dir: libraries/Arduino_RouterBridge` to `sketch.yaml`;
+  - copy `src/` and `library.properties` from the `Arduino_RouterBridge` 0.4.3 release tag into `sketch/libraries/Arduino_RouterBridge/`, and add `libraries: - dir: libraries/Arduino_RouterBridge` to `sketch.yaml`;
   - apply the two `// AGV patch` changes to `src/bridge.h`: overridable `UPDATE_THREAD_STACK_SIZE` set to 2048, and the stack filled with `0xAA` before `k_thread_create`. Check that `diff` against the release shows nothing else.
 - [x] Record the board's software versions, after the scratch app (adding a library in App Lab refreshes the library index) and with the patched copy in place: `arduino-app-cli version`, `arduino-router version`, the `arduino:zephyr` platform, and `arduino_app_bricks` (`importlib.metadata.version` from the app). Save the "Used library …" lines printed by `app start` in `docs/board-versions.txt`. Pin that `arduino_app_bricks` release tag in `pyproject.toml` and run `uv lock`. No `arduino-app-cli system update`, `apt upgrade` or App Lab board update until Day 7 is done (see `CLAUDE.md`, Freezing the board's versions).
 - [x] **Check before any Bridge work:** the `Arduino_RouterBridge` line printed by `app start` must point to `sketch/libraries/Arduino_RouterBridge`. If it points to the platform's copy, the bridge thread still has the 500-byte stack that overflows silently: stop and ask how to proceed.
@@ -53,6 +53,15 @@ detecting obstacles with the camera and replanning around them on an occupancy g
   - Only if the jitter is unacceptable, move the tick to its own `k_thread`.
 
 **Firmware**
+- [ ] Split `sketch/sketch.ino` into modules before it grows, with no change in behaviour:
+  - modules go in `sketch/src/<module>/` (`.h` + `.cpp`), included from the sketch as `#include "src/<module>/<module>.h"`. arduino-cli compiles `src/` recursively; checked on the PC with arduino-cli 1.5.1 and `arduino:zephyr` 1.0.0 (a test module in a copy of the sketch compiled, linked and got its own entry in `compile_commands.json`). The board builds with arduino-cli 1.4.2, so check the first `app start` after the split. `deploy.sh` already syncs all of `sketch/`;
+  - not local libraries with `dir:` in `sketch.yaml` (each needs a `library.properties` and its own entry, and only pays off for code shared between sketches);
+  - every `.cpp` includes `<Arduino.h>` explicitly (only the `.ino` gets it for free). `Bridge` comes with it: `Arduino.h` includes the variant's `postvariant.h`, which includes `Arduino_RouterBridge.h` (`arduino:zephyr` 1.0.0, `variants/arduino_uno_q_stm32u585xx/postvariant.h`);
+  - one namespace per module, its state `static` inside the `.cpp`;
+  - proposed split: `config.h` (pins, tick period, arena limits), `commands` (`k_msgq`, staged path under the mutex, drain), `handlers` (Bridge handlers and the bridge thread id), `tick_timing` (lateness, tick body, hook time), `bridge_stack` (stack scan and emergency); later `motor_driver`, `encoders`, `wheel_pi`, `odometry`, `heading_pid`, `p2p_controller`. `sketch.ino` keeps only `setup()`, `loop()` and `tick()`;
+  - optional: pure-math modules (speed and rotation ramps, `s = (w − p)·u`, PI, odometry) written without `Arduino.h`, so they also compile with the PC's `g++` for native unit tests;
+  - after the split, deploy once and check that `status` and `hook` match a run of the unsplit sketch, then update *Current code state* in `CLAUDE.md`.
+  - Still to decide: when (before the TB6612 driver or later), the final module list, whether native C++ tests start now, and which log records it.
 - [ ] Own TB6612 driver: signed PWM per wheel, explicit brake and coast. Left = D6/D7/D8, right = D9/D10/D11, STBY is hardwired to 3.3 V.
   - In `setup()`, call `analogWrite(D6, 0)` and `analogWrite(D9, 0)` once: that initializes the deferred PWM timers and switches the pins to them. From then on set ~20 kHz with Zephyr `pwm_set` only (period 50 µs, see `CLAUDE.md`, Architecture) and check its return value; a later `analogWrite` would re-apply 500 Hz.
   - If `pwm_set` is not reachable from the sketch, keep 500 Hz and do all identification at that frequency.
