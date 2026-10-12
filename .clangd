@@ -1,4 +1,0 @@
-If:
-  PathMatch: .*\.ino
-CompileFlags:
-  Add: [-xc++, -std=gnu++17, -include, Arduino.h]
