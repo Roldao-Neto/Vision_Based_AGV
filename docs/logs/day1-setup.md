@@ -387,15 +387,13 @@ O que o app faz:
 
 **Pico de pilha e emergência.** A cada tick, `scan_bridge_stack()` conta os bytes `0xAA` a partir do fundo da pilha (`stack_info.start`); o pico é o tamanho menos esses bytes intocados. Ler a pilha de outra thread enquanto ela roda é seguro: os bytes só deixam de ser `0xAA`, e a varredura se repete a cada 20 ms. Com menos de 512 bytes intocados, a emergência trava (até reiniciar), dá short brake, passa a recusar `set_path` e manda `emergency(t_ms, pico, intocados)` uma vez.
 
-**Motores: só coast e short brake.** Pela tabela do TB6612, IN1 = IN2 = L desliga a saída (coast) e IN1 = IN2 = H dá short brake, seja qual for o PWM. O sketch só faz coast no boot e short brake na emergência; o PWM (D6, D9) não é tocado e fica baixo pelos pull-downs de 200 kΩ. Este código não consegue girar um motor, a LiPo estava desconectada também para o deploy.
+**Motores: só IN1 = IN2 = L no boot e short brake na emergência.** Pela tabela do TB6612 (p. 4), IN1 = IN2 = H dá short brake, seja qual for o PWM; já IN1 = IN2 = L só é coast (alta impedância) com PWM = H. Aqui o PWM (D6, D9) não é tocado e fica baixo pelos pull-downs de 200 kΩ, e IN1 = IN2 = PWM = L não está na tabela: nenhuma direção é escolhida, então o motor não é acionado, mas não está especificado se ele fica em alta impedância ou em short brake (conferido no bloco Firmware, `day1-firmware.md`, seção 2; o código desta seção chamava esse estado de coast). Este código não consegue girar um motor, a LiPo estava desconectada também para o deploy.
 
 **Telemetria**, sempre por `Bridge.notify` (o `Serial` do UNO Q é um RPC bloqueante):
 
 - `status` a cada 25 ticks (500 ms): `t_ms`, os piores casos da janela (atraso do tick, corpo do tick, tempo fora do `loop()`), overruns desde o boot, pico e bytes intocados da pilha, idade do `hb` (−1 antes do primeiro), `path_id` aplicado e a flag de emergência;
 - `hook(t_ms, duração)` a cada passagem fora do `loop()` acima de 3 ms (seção 11);
 - `emergency`, uma vez.
-
-**Tick de 20ms**
 
 ### Python (`python/`)
 
@@ -527,8 +525,8 @@ desconectada.
 | `20261010-171517_app_{diag,events,tick,tickhist}.csv` | tick, 146 s (seção 10) |
 | `20261010-172717_app_{diag,events,hook,stress,tick,tickhist}.csv` | teste de estresse (seção 11) |
 | `20261010-173441_app_{diag,events,hook,tick,tickhist}.csv` | versão limpa depois do teste de estresse (seção 11) |
-| `20261010-231955_app_{events,hook,status}.csv` | app enxuto, ~33 s (seção 13) |
-| `20261011-164934_app_{events,hook,status}.csv` | app enxuto depois da divisão do `main.py`, ~60 s (seção 13) |
+| `20261010-231955_app_{events,hook,status}.csv` | app enxuto, ~207 s (seção 9) |
+| `20261011-164934_app_{events,hook,status}.csv` | app enxuto depois da divisão do `main.py`, ~60 s (seção 9) |
 
 ### Conclusões gerais
 

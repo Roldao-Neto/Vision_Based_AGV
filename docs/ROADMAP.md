@@ -12,83 +12,40 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 
 ## Day 1 — Toolchain and wheel speed control
 
-**Setup**
-- [x] **Board versions first**, before anything else is set up or recorded: read `arduino-app-cli version`, `arduino-router version` and the `arduino:zephyr` platform version, and compare them with the versions the Bridge analysis in `CLAUDE.md` was verified against (arduino-app-cli ≥ 0.11, arduino-router ≥ 0.8.0, core 1.0.0). If any is older, run `arduino-app-cli system update` now: it is the last update until Day 7 is done (see `CLAUDE.md`, Freezing the board's versions), and an update after the versions are recorded or the tick is measured would mean doing them again.
-- [x] Before the first `deploy.sh`:
-  - look at the target app folder on the board and copy to the PC anything that exists only there, since the sync's `--delete` removes it;
-  - until the first deploy replaces it, the app on the board may still be the archived one (`../TCC_Artifacts/applab_raw_code/`), whose sketch is the old motor demo: an endless forward/backward loop with no limits, which the hardwired STBY no longer stops. Do not start it with the LiPo connected and the wheels on the floor.
-- [x] `deploy.sh` (see `CLAUDE.md`, Development workflow):
-  - stop the app, rsync `app.yaml`, `python/`, `sketch/`, `bricks/`, `models/` to the board over Wi-Fi, then `arduino-app-cli app start` and follow the logs;
-  - once `docs/board-versions.txt` exists (see below), compare the "Used library …" lines printed by `app start` with it and stop the app if any differ;
-  - `logs/` (`/app/logs` in the container) and `.cache/` on the board are never touched by `--delete`;
-  - `deploy.sh pull <day>` (e.g. `day1`), only between runs:
-    - stops the app first and leaves it stopped, so no file is copied while still being written (`app stop` also resets the STM32, see `CLAUDE.md`, Development workflow);
-    - copies the files in `/app/logs/` into `data/<day>/` on the PC with `--ignore-existing`, so nothing already there is overwritten, and only then deletes them on the board (`rsync --remove-source-files` deletes each file only after it has been transferred), so each pull brings only new files and the board's storage does not fill up;
-    - lists any file left in `logs/` (a skipped name collision).
-- [x] Per-run logs (see `CLAUDE.md`, Development workflow): every file name is unique (date and time plus mode and parameters), and every row is flushed when written.
-- [x] Confirm the board keeps OpenCV 4.13 after installing `python/requirements.txt`. The container image ships and pins OpenCV 4.13.0+1ddb20b, so `requirements.txt` must not list it (see `CLAUDE.md`, Local Python environment).
-- [x] `sketch/sketch.yaml`:
-  - add a scratch app in App Lab that uses `Arduino_RouterBridge` and copy what it generates; on current platforms that is no `libraries:` entry, since the libraries come with the platform (see `CLAUDE.md`, Current code state);
-  - set `fqbn: arduino:zephyr:unoq`.
-- [x] Patched Bridge copy (see `CLAUDE.md`, Bridge limits and threading):
-  - copy `src/` and `library.properties` from the `Arduino_RouterBridge` 0.4.3 release tag into `sketch/libraries/Arduino_RouterBridge/`, and add `libraries: - dir: libraries/Arduino_RouterBridge` to `sketch.yaml`;
-  - apply the two `// AGV patch` changes to `src/bridge.h`: overridable `UPDATE_THREAD_STACK_SIZE` set to 2048, and the stack filled with `0xAA` before `k_thread_create`. Check that `diff` against the release shows nothing else.
-- [x] Record the board's software versions, after the scratch app (adding a library in App Lab refreshes the library index) and with the patched copy in place: `arduino-app-cli version`, `arduino-router version`, the `arduino:zephyr` platform, and `arduino_app_bricks` (`importlib.metadata.version` from the app). Save the "Used library …" lines printed by `app start` in `docs/board-versions.txt`. Pin that `arduino_app_bricks` release tag in `pyproject.toml` and run `uv lock`. No `arduino-app-cli system update`, `apt upgrade` or App Lab board update until Day 7 is done (see `CLAUDE.md`, Freezing the board's versions).
-- [x] **Check before any Bridge work:** the `Arduino_RouterBridge` line printed by `app start` must point to `sketch/libraries/Arduino_RouterBridge`. If it points to the platform's copy, the bridge thread still has the 500-byte stack that overflows silently: stop and ask how to proceed.
-- [x] Minimal app: sketch and Python exchange a Bridge ping; Python sends the `hb` heartbeat (5 Hz).
-  - MCU handlers follow the command queue rule and take integer arguments only (see `CLAUDE.md`, Bridge limits and threading). Store `k_current_get()` inside a handler and in `loop()`, report both from `loop()` through `notify` (handlers make no Bridge calls), and record which thread runs the handlers.
-  - Bridge stack peak (see `CLAUDE.md`, Bridge limits and threading): find the bridge thread from a handler, scan its stack from `loop()`, send the peak in telemetry, and wire the emergency for fewer than 512 untouched bytes. Check the scan once by reading it right after boot: the peak must be well below 2048 bytes and above 0.
-  - Python retries `ping` until the MCU answers before sending anything else.
-  - Test the size limit: a 32-waypoint `set_path` in integer mm (217 bytes) must be acked; the same path in floats (601 bytes) must be rejected. Record both. Run the float test last: if the router let it through, it would block the MCU's RPC until the app restarts.
-- [x] Editor support for the sketch:
-  - install `arduino-cli` and the `arduino:zephyr` core on the PC, at the platform version recorded from the board (`arduino-cli core install arduino:zephyr@<version>`), so the editor sees the same headers the board compiles with;
-  - confirm the FQBN with `arduino-cli board listall`;
-  - generate `compile_commands.json` with `arduino-cli compile --only-compilation-database --build-path build sketch`, run from the repo root. The build output goes to `build/` at the root (gitignored), never inside `sketch/`, because `deploy.sh` syncs `sketch/` to the board. clangd finds `build/compile_commands.json` by itself (it searches each parent directory and its `build/` subdirectory);
-  - point Zed's clangd at it, with `--query-driver` for `arm-zephyr-eabi-g++` in the project `.zed/settings.json`, so `Arduino.h` and the Zephyr APIs resolve.
-  The current `.clangd` only makes clangd parse `.ino` as C++.
-- [x] Control tick in `loop()`, scheduled with `micros()` (`next += 20000`). It applies the commands queued by the Bridge handlers at its start; apart from the `hb` timestamp, nothing else is shared with them.
-  - If the loop falls more than one period behind, resync `next` to now and log the overrun instead of running catch-up ticks with a near-zero dt.
-  - Telemetry goes out with `Bridge.notify`, never with `Serial` (see `CLAUDE.md`, Bridge limits and threading).
-  - Log its jitter: expect ~1–2 ms (the Bridge sleeps 1 ms after every `loop()`, and its thread preempts `loop()`).
-  - Only if the jitter is unacceptable, move the tick to its own `k_thread`.
+**Setup** (details in `docs/logs/day1-setup.md`)
+- [x] Board versions checked first and updated once with `system update`: arduino-app-cli 0.13.0, arduino-router 0.10.0, `arduino:zephyr` 1.0.0. Frozen until Day 7 is done (see `CLAUDE.md`, Freezing the board's versions).
+- [x] Board backed up before the first deploy (`../TCC_Artifacts/board_backup_20261010/`); the old motor demo `agv-motors-test` must not be started.
+- [x] `deploy.sh`: deploy (stop, rsync, `app start`, version check, logs) and `pull <day>` (moves `/app/logs/` into `data/<day>/`, only between runs); `run <command>` came with Day 1 Firmware. See `CLAUDE.md`, Development workflow.
+- [x] Per-run logs: unique names, every row flushed (`python/run_log.py`).
+- [x] OpenCV 4.13.0+1ddb20b comes from the container image and stays out of `requirements.txt`.
+- [x] `sketch/sketch.yaml` as App Lab generates it, plus `fqbn: arduino:zephyr:unoq`.
+- [x] Patched `Arduino_RouterBridge` 0.4.3 in `sketch/libraries/` (bridge thread stack 2048 B, filled with `0xAA`); `app start` uses this copy.
+- [x] Versions recorded in `docs/board-versions.txt` (`arduino_app_bricks` 0.12.0, pinned in `pyproject.toml`); `deploy.sh` compares them on every deploy.
+- [x] Minimal app: `ping`, 5 Hz `hb`, handlers through the command queue (256 calls on the bridge thread and 95 on the main thread over 70 s), Bridge stack peak ~930 B with the emergency below 512 B untouched; a 32-waypoint `set_path` in integer mm (217 B) is acked and the float version (601 B) is refused by the router.
+- [x] Editor support: arduino-cli 1.5.1 and `arduino:zephyr` 1.0.0 on the PC, `build/compile_commands.json`, clangd in Zed.
+- [x] 20 ms tick in `loop()`: tick start 0–1.1 ms late in 99.89 % of ticks, no overrun; a large `set_path` holds `loop()` off ~35 ms, so it is sent only with the robot stopped. The tick stays in `loop()`.
 
-**Firmware**
-- [ ] Split `sketch/sketch.ino` into modules before it grows, with no change in behaviour:
-  - modules go in `sketch/src/<module>/` (`.h` + `.cpp`), included from the sketch as `#include "src/<module>/<module>.h"`. arduino-cli compiles `src/` recursively; checked on the PC with arduino-cli 1.5.1 and `arduino:zephyr` 1.0.0 (a test module in a copy of the sketch compiled, linked and got its own entry in `compile_commands.json`). The board builds with arduino-cli 1.4.2, so check the first `app start` after the split. `deploy.sh` already syncs all of `sketch/`;
-  - not local libraries with `dir:` in `sketch.yaml` (each needs a `library.properties` and its own entry, and only pays off for code shared between sketches);
-  - every `.cpp` includes `<Arduino.h>` explicitly (only the `.ino` gets it for free). `Bridge` comes with it: `Arduino.h` includes the variant's `postvariant.h`, which includes `Arduino_RouterBridge.h` (`arduino:zephyr` 1.0.0, `variants/arduino_uno_q_stm32u585xx/postvariant.h`);
-  - one namespace per module, its state `static` inside the `.cpp`;
-  - proposed split: `config.h` (pins, tick period, arena limits), `commands` (`k_msgq`, staged path under the mutex, drain), `handlers` (Bridge handlers and the bridge thread id), `tick_timing` (lateness, tick body, hook time), `bridge_stack` (stack scan and emergency); later `motor_driver`, `encoders`, `wheel_pi`, `odometry`, `heading_pid`, `p2p_controller`. `sketch.ino` keeps only `setup()`, `loop()` and `tick()`;
-  - optional: pure-math modules (speed and rotation ramps, `s = (w − p)·u`, PI, odometry) written without `Arduino.h`, so they also compile with the PC's `g++` for native unit tests;
-  - after the split, deploy once and check that `status` and `hook` match a run of the unsplit sketch, then update *Current code state* in `CLAUDE.md`.
-  - Still to decide: when (before the TB6612 driver or later), the final module list, whether native C++ tests start now, and which log records it.
-- [ ] Own TB6612 driver: signed PWM per wheel, explicit brake and coast. Left = D6/D7/D8, right = D9/D10/D11, STBY is hardwired to 3.3 V.
-  - In `setup()`, call `analogWrite(D6, 0)` and `analogWrite(D9, 0)` once: that initializes the deferred PWM timers and switches the pins to them. From then on set ~20 kHz with Zephyr `pwm_set` only (period 50 µs, see `CLAUDE.md`, Architecture) and check its return value; a later `analogWrite` would re-apply 500 Hz.
-  - If `pwm_set` is not reachable from the sketch, keep 500 Hz and do all identification at that frequency.
-- [ ] x4 quadrature interrupts (`CHANGE`, pins as `INPUT_PULLUP`): left D2 (A) / D4 (B), right D3 (A) / D5 (B). Forward motion must count positive on both wheels.
-- [ ] Mode `count`: mark the wheel, turn it 10 times by hand, read counts → **counts per wheel revolution**.
-- [ ] Fixed 20 ms control tick; wheel speed from count deltas divided by the **measured** dt.
-- [ ] Motion limits in firmware (see `CLAUDE.md`, Bridge contract, `mode`): every mode that moves the robot (`step`, the `pwm0` ramp, the closed-loop tests, and the Day 2 modes) takes a time limit, plus a distance limit where it drives, and the STM32 ends it by itself when either is reached, ramped in closed loop and coasting in open loop. The heartbeat watchdog only arrives on Day 3 and never covers calibration modes, so a lost ssh, Wi-Fi or Python must not leave the robot driving into the wall.
-- [ ] Wheels off the floor for every first run of new motor code (direction and counting signs, `pwm_set`, each new mode with its limits) before running it on the arena floor: a Zephyr fatal error keeps the PWM at its last duty (see `CLAUDE.md`, Pin map).
-- [ ] Identification conditions, for every `step` run and the closed-loop tests:
-  - the robot fully assembled (camera, power bank, LiPo) on the arena floor, since mass and floor set K, τ and `pwm0` (see `CLAUDE.md`, Architecture);
-  - the LiPo freshly charged at the start of each identification session (K scales roughly with the supply voltage, ~12 % between 12.6 V and 11.1 V, which the PI integrator absorbs); if the charger shows the voltage, save it with the CSVs.
-- [ ] Mode `step`:
-  - apply small PWM steps to both wheels together (20 %, 25 %, 30 %, never above 30 %), forward and backward, each ≤ 1 s, ending by coasting (PWM 0), never braking. At these duties the motor's starting torque (about duty × stall torque) should stay below what makes the wheels slip; the consistency check in Analysis catches it if not. During each step, store the cumulative counts with their `micros()` time every 2–5 ms in RAM, then send them to Python → CSV in notifications of ~200 bytes. Each notification carries the step's id and the index of its first sample, and the last one also the sample count, so Python detects a lost notification and the step is repeated instead of fitted. Fitting the model to counts (position) avoids differentiating noisy speeds, and a time constant of a few tens of ms would get only a couple of samples at 20 ms;
-  - add a slow PWM ramp per wheel and direction to find the start-up PWM `pwm0` (static friction).
+**Firmware** (details in `docs/logs/day1-firmware.md`)
+- [x] Sketch split into modules in `sketch/src/<module>/` (`.h` + `.cpp`, one namespace each, its state `static` in the `.cpp`); `sketch.ino` keeps only `setup()`, `loop()` and `tick()`. The board builds `src/` to the same size as the PC (107 484 B / 43 532 B) and its version lines match `docs/board-versions.txt`.
+- [x] Own TB6612 driver (`motor_driver`): signed duty per wheel, coast and short brake; one `analogWrite(pin, 0)` per PWM pin, then 20 kHz with `pwm_set_cycles` (`pwm_hz` = 20000, `pwm_err` = 0 on the board). Directions set off the floor: `kLeftMotorReversed = false`, `kRightMotorReversed = true`.
+- [x] x4 quadrature encoders (`CHANGE` on A and B, `INPUT_PULLUP`, a state table that counts a missed edge as an error): `kRightEncReversed = true`, so both wheels count positive forward; 0 missed edges turning by hand.
+- [x] Mode `count`: 1319.7 (left) and 1319.8 (right) counts per wheel revolution, ±0.5 (3 runs of 10 turns by hand); the firmware uses 1319.75 for both until Day 2.
+- [x] Wheel speed (`wheel_speed`) first in the 20 ms tick: count delta over the measured dt (18.8–21.1 ms), resolution 50 counts/s per tick.
+- [x] Motion limits in firmware: every moving mode takes a time limit, plus a distance limit (the farther wheel) where it drives; out-of-range requests are refused in the handler, and the STM32 ends the mode by itself, coasting in open loop and with a ramped stop in closed loop (see `CLAUDE.md`, Bridge contract, `mode`).
+- [x] Wheels off the floor for the first run of all new motor code (`pwm_set`, directions and count signs, `step`, the 2 ms sampling, `ramp`); the rule still applies to every new mode.
+- [x] Mode `step` (2): duty per wheel ≤ 30 %, ≤ 1000 ms, ≤ 500 mm, coast at the end; counts sampled every 2 ms by a `k_timer` and sent as `step_samples` (15 samples, ~193 B, every 40 ms), with loss detection in Python and one CSV per step (501/501 samples off the floor, 2 ms ± 20 µs).
+- [x] Mode `ramp` (3) for `pwm0`: both wheels, duty rising at 10–200 thousandths/s up to ≤ 30 % (≤ 6 s), ≤ 200 mm, one sample per tick; off-floor data shows single counts well before sustained motion, so the analysis needs a sustained-motion criterion.
+- [x] Floor identification session, robot fully assembled on the arena floor, LiPo freshly charged (12.6 V): steps at ±20, ±25, ±30 % and one ramp each way, all samples complete (`data/day1/20261011-195756_app_*`).
+- [x] `./deploy.sh run <command>` sends the mode commands through `cmd/`; commands left there while the app was stopped are discarded at the next start (`cmd_discarded`).
 
-**Analysis**
-- [ ] Fit a first-order model (gain K, time constant τ) and the static-friction offset `pwm0` per wheel and direction from the step and ramp CSVs, with K in counts/s per unit of PWM (the speed loop runs in counts/s, see `CLAUDE.md`, Architecture). The analysis scripts live in `analysis/` (PC only), read `data/day1/` and write their plots to `data/day1/plots/`.
-- [ ] Slip consistency check: K and τ fitted at 20 %, 25 % and 30 % must agree. A step whose τ is clearly smaller than the others slipped (the wheel spun up faster than the robot could): drop it and keep the amplitudes below it.
-- [ ] Compute PI gains from the model; feedforward `pwm = pwm0·sign(v) + v/K` with the low-speed rule in `CLAUDE.md`, Architecture; anti-windup.
-- [ ] Closed-loop tests, both wheels together, in the same conditions as the `step` runs, logging the commanded PWM:
-  - a 0.5 m/s² ramp from 0 to 0.25 m/s, the real operating profile: record the speed tracking error;
-  - a small speed step 0 → 0.1 m/s: record overshoot and settling time. The PWM must not saturate during the step, since a saturated PWM is what slips the wheels (see Day 2); if it does, use a smaller step.
-
-**README:** fill *Setup and running* (PC `uv sync`, `deploy.sh`, starting the app, editor setup).
-
-**Done when:** both wheels follow the 0.5 m/s² ramp to 0.25 m/s with a recorded tracking error and the 0 → 0.1 m/s step with known overshoot and settling time, the 32-waypoint `set_path` is acked, and the bridge stack peak is measured with the encoders running and more than 512 bytes untouched.
-**Record:** counts/rev, PWM frequency, K, τ and `pwm0` per wheel, K and τ per step amplitude (slip check), LiPo voltage if the charger shows it, PI gains, ramp tracking and step response plots, loop jitter, Bridge size test, the thread that runs the Bridge handlers, bridge stack peak (after the `set_path` tests and the closed-loop steps, i.e. with traffic and encoder interrupts), software versions.
+**Analysis** (details in `docs/logs/day1-analysis.md`; scripts in `analysis/`, plots in `data/day1/plots/`)
+- [x] First-order model per wheel and direction, fitted on counts (`day1_identify.py`, rms 1.3–5.1 counts, τ 96–164 ms per step); `pwm0` = start of sustained motion on the ramp (5 consecutive 20 ms intervals with a count): left 7.4 % fwd / 8.8 % bwd, right 6.9 / 7.2 %; K refit through the steps with that offset: left 7160 / 6668, right 7271 / 7509 counts/s per unit duty.
+- [x] Slip check: K agrees across 20, 25 and 30 %; τ falls gradually with amplitude (e.g. right fwd 128 / 103 / 96 ms), so Rolds kept every step and τ is the mean per wheel and direction (left 154 / 147, right 109 / 143 ms).
+- [x] PI gains (`day1_pi.py`, `pi_gains.csv`), decided by Rolds: pole-zero cancellation with Tcl = 0.1 s, feedforward `pwm0·sign(v) + (v + τ·a_ref)/K` (see `CLAUDE.md`, Architecture), conditional integration, duty limited to 50 %. Simulated: ramp error ≤ 6 mm/s after the first 0.1 s, step 0 → 0.1 m/s with 18–21 % overshoot and 0.5–0.7 s settling, duty ≤ 0.32.
+- [x] `wheel_pi` (pure C++, native tests through `uv run pytest`) and mode `speed` (4): one reference for both wheels, ramp or step; time, distance or command → ramped stop at 0.5 m/s², then coast.
+- [x] Closed-loop tests on the floor, forward and backward (`day1_closed_loop.py`): ramp to 0.25 m/s at 0.5 m/s² with tracking error rms 5–6 mm/s (mostly count quantization), 100 ms-smoothed max 6.7–12.8 mm/s while ramping up and 6.0–7.4 mm/s at 0.25 m/s; step 0 → 0.1 m/s with 10–17 % overshoot, settling 280–420 ms to ±10 %; duty ≤ 0.42, never saturated; close to the simulation. Bridge stack peak 896 B (≥ 1152 B untouched), 0 overruns.
+- [x] `encoder_guard` (approved by Rolds): ends `speed` at once, coasting, with reason 5 = `encoder` when a wheel is driven at |duty| ≥ 20 % for 200 ms without a count; replayed on the recorded runs it trips only on the unpowered one, and on the board with one encoder unplugged after 201 ms. The closed-loop modes of Days 2 and 3 use it too.
+- [x] Extra: a 1 m closed-loop run (`speed 250 500 4500 937`, caps raised to 4500 ms and 1000 mm): 997 mm by the encoders, both wheels within one count, smoothed error ≤ 5 mm/s at 0.25 m/s.
 
 ---
 

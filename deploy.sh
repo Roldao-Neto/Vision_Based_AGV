@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
+
 # Deploy the app to the UNO Q over Wi-Fi, or pull the per-run logs back to the PC.
 
 #   ./deploy.sh [--no-follow]   stop the running app, sync app.yaml, python/, sketch/, bricks/ and models/, start this app, check its libraries, follow its logs
 #   ./deploy.sh pull <day>      stop the running app, move /app/logs/* into data/<day>/ and leave the app stopped (only between runs)
+#   ./deploy.sh run <command>   send a command to the running app (e.g. `run count start`), then show its latest events
 
 # The board is reached through the ssh alias in BOARD (default "unoq", see ~/.ssh/config).
 set -euo pipefail
@@ -14,13 +16,13 @@ VERSIONS="$REPO/docs/board-versions.txt"
 PATCHED_BRIDGE=sketch/libraries/Arduino_RouterBridge
 
 usage() {
-    echo "usage: $0 [--no-follow] | pull <day>" >&2
+    echo "usage: $0 [--no-follow] | pull <day> | run <command>" >&2
     exit 2
 }
 
 stop_running_apps() {
     local id
-    
+
     for id in $(ssh "$BOARD" arduino-app-cli app list | awk '$(NF-1) ~ /^(running|starting)$/ {print $1}'); do
         echo "Stopping $id"
         ssh "$BOARD" arduino-app-cli app stop "$id"
@@ -33,7 +35,7 @@ library_lines() {
 
 check_libraries() {
     local out=$1 ok=0
-    
+
     if [[ -f $VERSIONS ]]; then
         if ! diff <(library_lines "$VERSIONS") <(library_lines "$out"); then
             echo "ERROR: platform/libraries differ from docs/board-versions.txt (< recorded, > now)" >&2
@@ -42,7 +44,7 @@ check_libraries() {
     else
         echo "WARNING: docs/board-versions.txt does not exist yet, libraries not checked" >&2
     fi
-    
+
     if [[ -d $REPO/$PATCHED_BRIDGE ]]; then
         if ! library_lines "$out" | grep -qE "^Used library Arduino_RouterBridge .* in .*/$PATCHED_BRIDGE$"; then
             echo "ERROR: Arduino_RouterBridge is not the patched copy in $PATCHED_BRIDGE" >&2
@@ -51,7 +53,7 @@ check_libraries() {
     else
         echo "WARNING: $PATCHED_BRIDGE does not exist yet, the bridge thread has the 500-byte stack" >&2
     fi
-    
+
     return $ok
 }
 
@@ -80,23 +82,33 @@ pull() {
     local day=$1 dest
     [[ $day =~ ^[A-Za-z0-9_-]+$ ]] || usage
     dest="$REPO/data/$day"
-    
+
     stop_running_apps
 
     if ! ssh "$BOARD" test -d "$APP_DIR/logs"; then
         echo "No $APP_DIR/logs on the board"
         return
     fi
-    
+
     mkdir -p "$dest"
     rsync -a --ignore-existing --remove-source-files "$BOARD:$APP_DIR/logs/" "$dest/"
     echo "Pulled into data/$day/. Files left in the board's logs/ (name collisions):"
     ssh "$BOARD" find "$APP_DIR/logs" -type f
 }
 
+run_command() {
+    local cmd="$*" name
+    [[ $cmd =~ ^[A-Za-z0-9_.\ -]+$ ]] || usage
+    name=$(date +%s%N)
+    ssh "$BOARD" "mkdir -p $APP_DIR/cmd && printf '%s\n' '$cmd' > $APP_DIR/cmd/.$name.tmp && mv $APP_DIR/cmd/.$name.tmp $APP_DIR/cmd/$name.cmd"
+    sleep 1
+    ssh "$BOARD" "tail -n 3 \"\$(ls -t $APP_DIR/logs/*_events.csv | head -1)\""
+}
+
 case "${1:-}" in
     "") deploy yes ;;
     --no-follow) [[ $# -eq 1 ]] || usage; deploy no ;;
     pull) [[ $# -eq 2 ]] || usage; pull "$2" ;;
+    run) [[ $# -ge 2 ]] || usage; shift; run_command "$@" ;;
     *) usage ;;
 esac

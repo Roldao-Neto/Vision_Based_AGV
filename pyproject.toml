@@ -5,6 +5,10 @@ requires-python = ">=3.13"
 dependencies = []
 
 [dependency-groups]
+analysis = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+]
 dev = [
     "arduino-app-bricks",
     "arduino-router-bridge>=0.5.1",
@@ -19,11 +23,14 @@ dev = [
 arduino-app-bricks = { git = "https://github.com/arduino/app-bricks-py", tag = "release/0.12.0" }
 
 [tool.pytest.ini_options]
-pythonpath = ["python"]
+pythonpath = ["python", "analysis"]
 testpaths = ["tests"]
 
 [tool.basedpyright]
-extraPaths = ["bricks", "python"]
+extraPaths = ["analysis", "bricks", "python"]
 venvPath = "."
 venv = ".venv"
 typeCheckingMode = "standard"
+
+[tool.uv]
+default-groups = ["dev", "analysis"]
