@@ -24,6 +24,11 @@ Undergraduate thesis (TCC, Unifei): a differential-drive AGV on an **Arduino UNO
     4. the results, with explanations (numbers, tables, the data files in `data/<day>/`);
     5. conclusions.
   - Every fact keeps its source (library file and version, board file, measurement), and the final versions of the files written in that block go in an appendix.
+- **Archive each day, then keep only the essential code on `main`** (decided on Day 2). When a day's *Done when* holds:
+  1. Branch `day<N>` from `main` and tag it `day<N>-final` (annotated). The branch is a frozen archive, never merged back; a later fix to that day's logs is a commit on it. Rolds runs every git command, so list them instead of running them.
+  2. On the branch only: copy `data/day<N>/` to `results/day<N>/` (committed; `data/` stays gitignored), delete the copies that no log, `docs/ROADMAP.md` or analysis script cites, and change every `data/day<N>` path in the logs, `docs/ROADMAP.md`, `CLAUDE.md` and the analysis scripts to `results/day<N>`, so the tag stands on its own (rerun the scripts to check). Small files only: CSVs, plots, at most a short demonstration video; never the dataset or an `.eim`. The repository is public, so report anything sensitive before it is committed.
+  3. On `main`: remove the code the next days do not need. What is essential is decided day by day with Rolds; code kept "for later" that is still unused on Day 8 goes then. Put a note at the top of each of that day's logs pointing to the branch, and update `CLAUDE.md` to the code that remains.
+  4. Deploy the cleaned code and check it on the board before starting anything new.
 
 ## Architecture
 

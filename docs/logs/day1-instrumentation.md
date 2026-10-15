@@ -1,5 +1,7 @@
 # Dia 1 — Instrumentação do app mínimo (código retirado)
 
+> **Arquivo:** o código, os dados e os gráficos deste dia estão no branch `day1` (tag `day1-final`), com os dados em `results/day1/`. No `main`, parte do código citado aqui foi removida depois do Dia 1, e `data/day1/` não é versionado.
+
 Este documento guarda esse código. Para cada parte: o código, as métricas que ele extraiu, para que
 elas serviram, o resultado e o arquivo de dados.
 

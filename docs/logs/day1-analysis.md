@@ -1,5 +1,7 @@
 # Dia 1 — Análise: modelo das rodas e ganhos do PI
 
+> **Arquivo:** o código, os dados e os gráficos deste dia estão no branch `day1` (tag `day1-final`), com os dados em `results/day1/`. No `main`, parte do código citado aqui foi removida depois do Dia 1, e `data/day1/` não é versionado.
+
 ## 1. Ferramentas da análise (`analysis/`)
 
 ### O que foi feito e por quê
