@@ -1,0 +1,27 @@
+rx_monotonic,event,detail
+104039.992080954,start,status=20261011-195756_app_status.csv events=20261011-195756_app_events.csv
+104039.997784838,mcu_ready,attempts=1 after=0.0s last_error=None
+104058.279023672,cmd,"step 200 200 1000 400 -> mode(2, 200, 200, 1000, 400) ack=True"
+104059.310018258,step_end,record_id=1 duration_ms=1000 reason=time duty_l=200 duty_r=200 counts_l=756 counts_r=849 errors_l=0 errors_r=0 samples=500
+104060.653061079,step_samples,record_id=1 samples=500 file=20261011-195817_step_1_L200_R200.csv
+104140.407676728,cmd,"step -200 -200 1000 400 -> mode(2, -200, -200, 1000, 400) ack=True"
+104141.423427488,step_end,record_id=2 duration_ms=1001 reason=time duty_l=-200 duty_r=-200 counts_l=-656 counts_r=-817 errors_l=0 errors_r=0 samples=501
+104142.767932336,step_samples,record_id=2 samples=501 file=20261011-195939_step_2_L-200_R-200.csv
+104163.306249807,cmd,"step 250 250 1000 400 -> mode(2, 250, 250, 1000, 400) ack=True"
+104164.342933691,step_end,record_id=3 duration_ms=1019 reason=time duty_l=250 duty_r=250 counts_l=1090 counts_r=1204 errors_l=0 errors_r=0 samples=510
+104165.696662423,step_samples,record_id=3 samples=510 file=20261011-200002_step_3_L250_R250.csv
+104175.968000743,cmd,"step -250 -250 1000 400 -> mode(2, -250, -250, 1000, 400) ack=True"
+104176.995124188,step_end,record_id=4 duration_ms=1000 reason=time duty_l=-250 duty_r=-250 counts_l=-922 counts_r=-1121 errors_l=0 errors_r=0 samples=500
+104178.337458244,step_samples,record_id=4 samples=500 file=20261011-200015_step_4_L-250_R-250.csv
+104198.666003696,cmd,"step 300 300 1000 400 -> mode(2, 300, 300, 1000, 400) ack=True"
+104199.696163253,step_end,record_id=5 duration_ms=1000 reason=time duty_l=300 duty_r=300 counts_l=1395 counts_r=1514 errors_l=0 errors_r=0 samples=501
+104201.03920126,step_samples,record_id=5 samples=501 file=20261011-200037_step_5_L300_R300.csv
+104220.759837264,cmd,"step -300 -300 1000 400 -> mode(2, -300, -300, 1000, 400) ack=True"
+104221.775652435,step_end,record_id=6 duration_ms=1001 reason=time duty_l=-300 duty_r=-300 counts_l=-1220 counts_r=-1524 errors_l=0 errors_r=0 samples=501
+104223.11980466,step_samples,record_id=6 samples=501 file=20261011-200059_step_6_L-300_R-300.csv
+104249.679402557,cmd,"ramp 1 50 300 100 -> mode(3, 1, 50, 300, 100) ack=True"
+104252.846672378,ramp_end,record_id=7 duration_ms=3140 reason=distance direction=1 rate=50 last_duty=156 counts_l=513 counts_r=625 errors_l=0 errors_r=0 samples=159
+104253.288920635,ramp_samples,record_id=7 samples=159 file=20261011-200130_ramp_7_dir+1_rate50.csv
+104278.400938396,cmd,"ramp -1 50 300 100 -> mode(3, -1, 50, 300, 100) ack=True"
+104281.671688752,ramp_end,record_id=8 duration_ms=3240 reason=distance direction=-1 rate=50 last_duty=-161 counts_l=-463 counts_r=-632 errors_l=0 errors_r=0 samples=164
+104282.116877365,ramp_samples,record_id=8 samples=164 file=20261011-200158_ramp_8_dir-1_rate50.csv

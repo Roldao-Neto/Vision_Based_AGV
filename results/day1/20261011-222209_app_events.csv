@@ -1,0 +1,23 @@
+rx_monotonic,event,detail
+112692.204876574,start,status=20261011-222209_app_status.csv events=20261011-222209_app_events.csv
+112692.211060361,mcu_ready,attempts=1 after=0.0s last_error=None
+112777.955661652,cmd,"speed 301 0 1000 100 -> mode(4, 301, 0, 1000, 100) ack=False"
+112779.770424988,cmd,"speed 100 50 1000 100 -> mode(4, 100, 50, 1000, 100) ack=False"
+112781.786459381,cmd,"speed 100 0 3001 100 -> mode(4, 100, 0, 3001, 100) ack=False"
+112783.601536989,cmd,"speed 100 0 1000 601 -> mode(4, 100, 0, 1000, 601) ack=False"
+112785.417049079,cmd,"speed 0 0 1000 100 -> mode(4, 0, 0, 1000, 100) ack=False"
+112792.45302545,cmd,"speed 250 500 1500 450 -> mode(4, 250, 500, 1500, 450) ack=True"
+112794.508965394,speed_end,record_id=1 duration_ms=2019 reason=time v_mm_s=250 accel_mm_s2=500 counts_l=0 counts_r=0 errors_l=0 errors_r=0 samples=102
+112794.902480214,speed_samples,record_id=1 samples=102 file=20261011-222351_speed_1_v250_a500.csv
+112889.44005737,cmd,"speed 250 500 1500 450 -> mode(4, 250, 500, 1500, 450) ack=True"
+112891.475910671,speed_end,record_id=2 duration_ms=2001 reason=time v_mm_s=250 accel_mm_s2=500 counts_l=2343 counts_r=2345 errors_l=0 errors_r=0 samples=101
+112891.869496062,speed_samples,record_id=2 samples=101 file=20261011-222528_speed_2_v250_a500.csv
+112912.139415508,cmd,"speed -250 500 1500 450 -> mode(4, -250, 500, 1500, 450) ack=True"
+112914.201532455,speed_end,record_id=3 duration_ms=2019 reason=time v_mm_s=-250 accel_mm_s2=500 counts_l=-2337 counts_r=-2332 errors_l=0 errors_r=0 samples=102
+112914.591365687,speed_samples,record_id=3 samples=102 file=20261011-222551_speed_3_v-250_a500.csv
+112923.192380333,cmd,"speed 100 0 1500 250 -> mode(4, 100, 0, 1500, 250) ack=True"
+112924.926175667,speed_end,record_id=4 duration_ms=1700 reason=time v_mm_s=100 accel_mm_s2=0 counts_l=1000 counts_r=1004 errors_l=0 errors_r=0 samples=86
+112925.245166649,speed_samples,record_id=4 samples=86 file=20261011-222602_speed_4_v100_a0.csv
+112934.445113907,cmd,"speed -100 0 1500 250 -> mode(4, -100, 0, 1500, 250) ack=True"
+112936.158191875,speed_end,record_id=5 duration_ms=1681 reason=time v_mm_s=-100 accel_mm_s2=0 counts_l=-998 counts_r=-992 errors_l=0 errors_r=0 samples=85
+112936.47619655,speed_samples,record_id=5 samples=85 file=20261011-222613_speed_5_v-100_a0.csv

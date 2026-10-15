@@ -1,0 +1,21 @@
+rx_monotonic,event,detail
+101488.928582731,start,status=20261011-191525_app_status.csv events=20261011-191525_app_events.csv
+101488.934973744,mcu_ready,attempts=1 after=0.0s last_error=None
+101669.042359236,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101685.312451024,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101685.322046634,count,duration=16.3s counts_l=701 counts_r=0 errors_l=0 errors_r=0
+101693.755180766,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101714.047076487,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101714.047236071,count,duration=20.3s counts_l=3016 counts_r=3208 errors_l=0 errors_r=0
+101724.696931416,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101745.186045976,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101745.194191763,count,duration=20.5s counts_l=4687 counts_r=4932 errors_l=0 errors_r=0
+101752.622428036,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101766.082887312,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101766.093742581,count,duration=13.4s counts_l=3216 counts_r=3191 errors_l=0 errors_r=0
+101770.508318797,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101783.368860469,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101783.369701303,count,duration=12.8s counts_l=3093 counts_r=3226 errors_l=0 errors_r=0
+101788.39737229,cmd,"count start -> mode(1, 0, 0, 0, 0) ack=True"
+101801.857972666,cmd,"count stop -> mode(0, 0, 0, 0, 0) ack=True"
+101801.865527517,count,duration=13.4s counts_l=3253 counts_r=3139 errors_l=0 errors_r=0

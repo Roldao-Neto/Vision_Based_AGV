@@ -434,7 +434,7 @@ O centro é `next_tick_us += kTickPeriodUs` em `run_tick_if_due()`:
 A versão medida também calculava o dt real entre ticks e mandava estatísticas por janela e um
 histograma do atraso; esse código saiu e está em `day1-instrumentation.md`.
 
-### Resultados (`data/day1/20261010-171517_app_*.csv`, 146 s, 7500 ticks)
+### Resultados (`results/day1/20261010-171517_app_*.csv`, 146 s, 7500 ticks)
 
 - 50,17 Hz e **nenhum overrun**.
 - Atraso do início do tick entre 0 e 1,1 ms em **99,89 %** dos ticks, média de 0,60 ms, quase uniforme (de 656 a 719 ticks em cada faixa de 100 µs). Em regime, os piores casos por janela ficaram em 1,23–1,65 ms.
@@ -468,7 +468,7 @@ A distribuição uniforme de 0 a ~1,1 ms é o efeito do `k_msleep(1)`: o `loop()
 O código provisório está em `day1-instrumentation.md`, parte 6. Deploy com a LiPo ainda
 desconectada.
 
-### Resultados (`data/day1/20261010-172717_app_*.csv`)
+### Resultados (`results/day1/20261010-172717_app_*.csv`)
 
 | Fase (30 s, 2 Hz) | Maior tempo fora do `loop()` | Maior atraso do tick | dt (mín–máx) | RTT no Python |
 |---|---|---|---|---|
@@ -517,7 +517,7 @@ desconectada.
 | App mínimo | ✓ (ping, hb 5 Hz, threads, pico 936 B, teste de tamanho) |
 | Tick de controle | ✓ (jitter < 1,7 ms em regime; `set_path` só parado) |
 
-### Dados do Dia 1 em `data/day1/`
+### Dados do Dia 1 em `results/day1/`
 
 | Arquivos | Conteúdo |
 |---|---|

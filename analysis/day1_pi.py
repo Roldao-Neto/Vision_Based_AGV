@@ -1,6 +1,6 @@
 """Day 1 analysis: PI gains per wheel and direction, checked in simulation (PC only).
 
-Reads data/day1/plots/identification_model.csv (written by day1_identify.py), applies the
+Reads results/day1/plots/identification_model.csv (written by day1_identify.py), applies the
 design decided on 2026-10-11 (docs/logs/day1-analysis.md, section 5) and simulates the two
 closed-loop tests of the ROADMAP with the controller's model and with the extreme measured
 time constants as the plant.

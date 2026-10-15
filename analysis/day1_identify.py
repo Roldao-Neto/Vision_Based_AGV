@@ -1,8 +1,8 @@
 """Day 1 analysis: wheel model (K, tau, pwm0) per wheel and direction (PC only).
 
-Reads one app session of `step` and `ramp` recordings from data/day1/ (the sample files
+Reads one app session of `step` and `ramp` recordings from results/day1/ (the sample files
 are listed in that session's events log), prints the tables for the work log, and writes
-data/day1/plots/identification_{steps,model}.csv and the plots.
+results/day1/plots/identification_{steps,model}.csv and the plots.
 
     uv run python analysis/day1_identify.py [events_csv]
 """
@@ -33,7 +33,7 @@ from wheel_model import (
     windowed_speed,
 )
 
-DATA = Path(__file__).resolve().parent.parent / "data" / "day1"
+DATA = Path(__file__).resolve().parent.parent / "results" / "day1"
 PLOTS = DATA / "plots"
 # Floor identification session of 2026-10-11, 12.6 V (docs/logs/day1-firmware.md, section 9).
 SESSION = DATA / "20261011-195756_app_events.csv"

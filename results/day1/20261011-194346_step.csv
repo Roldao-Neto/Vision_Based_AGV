@@ -1,0 +1,3 @@
+rx_monotonic,t_ms,step_id,duration_ms,reason,duty_l,duty_r,counts_l,counts_r,errors_l,errors_r,samples
+103189.26963391,102567,1,1001,1,200,200,952,1092,0,0,501
+103199.136197397,112426,2,1000,1,-200,-200,-842,-1077,0,0,501

@@ -1,0 +1,3 @@
+rx_monotonic,t_ms,record_id,duration_ms,reason,direction,rate,last_duty,counts_l,counts_r,errors_l,errors_r,samples
+103865.23841868,164276,1,3340,2,1,50,166,1007,1250,0,0,169
+103875.565894304,174596,2,3420,2,-1,50,-170,-949,-1263,0,0,173

@@ -49,7 +49,7 @@ clangd --check=sketch/sketch.ino --query-driver=".../arm-zephyr-eabi-g*"
 ```
 
 - **A placa compila o `src/`:** mesmo tamanho do PC (107 484 B / 43 532 B), e as linhas "Board platform" e "Used library" bateram com o `docs/board-versions.txt`, com a Bridge corrigida (`.../agv/sketch/libraries/Arduino_RouterBridge`).
-- Dados: `data/day1/20261011-174706_app_{events,hook,status}.csv`.
+- Dados: `results/day1/20261011-174706_app_{events,hook,status}.csv`.
 
 ## 2. Driver próprio do TB6612
 
@@ -97,7 +97,7 @@ Consequências para o driver:
 ./deploy.sh pull day1
 ```
 
-`data/day1/20261011-175914_app_{events,hook,status}.csv`, 63 s, 127 linhas de `status`
+`results/day1/20261011-175914_app_{events,hook,status}.csv`, 63 s, 127 linhas de `status`
 
 ## 3. Encoders em quadratura x4
 
@@ -123,7 +123,7 @@ frente e depois para trás, três vezes.
 ssh unoq 'f=$(ls -t /home/arduino/ArduinoApps/agv/logs/*_status.csv | head -1); cat $f'
 ```
 
-Dados: `data/day1/20261011-180736_app_{events,hook,status}.csv` (652 linhas, 326 s).
+Dados: `results/day1/20261011-180736_app_{events,hook,status}.csv` (652 linhas, 326 s).
 
 **Resultado (trecho, um valor por janela de 0,5 s em que a contagem mudou):**
 
@@ -142,7 +142,7 @@ Dados: `data/day1/20261011-180736_app_{events,hook,status}.csv` (652 linhas, 326
 
 ### Teste à mão: confirmação depois da correção
 
-Deploy com `kRightEncReversed = true`; girou-se só para a frente, primeiro o motor A, depois o motor B. Dados: `data/day1/20261011-181645_app_{events,hook,status}.csv`.
+Deploy com `kRightEncReversed = true`; girou-se só para a frente, primeiro o motor A, depois o motor B. Dados: `results/day1/20261011-181645_app_{events,hook,status}.csv`.
 
 | Trecho (`t_ms`) | `enc_l` | `enc_r` |
 |---|---|---|
@@ -194,7 +194,7 @@ count,duration=4.2s counts_l=0 counts_r=0 errors_l=0 errors_r=0
 
 ### Medição: 3 execuções de 10 voltas
 
-Marcaram-se as duas rodas e, em cada execução, rodou `./deploy.sh run count start`, girou-se cada roda 10 voltas para a frente (marca alinhada com uma referência fixa no chassi) e rodou `./deploy.sh run count stop`. Dados: `data/day1/20261011-182826_count.csv` (a 1ª linha é o teste a seco) e `20261011-182803_app_{events,hook,status}.csv`.
+Marcaram-se as duas rodas e, em cada execução, rodou `./deploy.sh run count start`, girou-se cada roda 10 voltas para a frente (marca alinhada com uma referência fixa no chassi) e rodou `./deploy.sh run count stop`. Dados: `results/day1/20261011-182826_count.csv` (a 1ª linha é o teste a seco) e `20261011-182803_app_{events,hook,status}.csv`.
 
 | Execução | Duração | Contagens esq. | Contagens dir. | Erros esq./dir. |
 |---|---|---|---|---|
@@ -255,7 +255,7 @@ Decisão:
 
 ### Resultados na placa: parado
 
-`data/day1/20261011-191525_app_*` (primeiras linhas, rodas paradas):
+`results/day1/20261011-191525_app_*` (primeiras linhas, rodas paradas):
 
 - Velocidade exatamente 0 com as rodas paradas.
 - dt entre 18,8 e 21,1 ms enquanto as rodas estavam paradas.
@@ -292,7 +292,7 @@ pelo ssh, com 1,3 s de intervalo, para o 2º chegar enquanto as amostras do 1º 
 | 2 | o mesmo, 1,3 s depois | **recusado** (`ack=False`): as amostras do 1º ainda estavam saindo |
 | 3 | `step -200 -200 1000 500` | fim por tempo, 1000 ms; 501 amostras; `20261011-194357_step_2_L-200_R-200.csv` |
 
-Dados: `data/day1/20261011-194346_step.csv`, os dois arquivos de amostras e
+Dados: `results/day1/20261011-194346_step.csv`, os dois arquivos de amostras e
 `20261011-194208_app_{events,hook,status}.csv`.
 
 **Análise das amostras** (script Python sobre os CSVs):
@@ -338,7 +338,7 @@ Os oito foram recusados (`20261011-195223_app_events.csv`).
 ### Primeira execução, com as rodas no ar
 
 Montagem como na seção 7 (robô levantado, LiPo conectada, chave à mão). Dados:
-`data/day1/20261011-195502_ramp.csv`, `20261011-195502_ramp_1_dir+1_rate50.csv`,
+`results/day1/20261011-195502_ramp.csv`, `20261011-195502_ramp_1_dir+1_rate50.csv`,
 `20261011-195512_ramp_2_dir-1_rate50.csv`, `20261011-195518_step{,_3_L200_R200}.csv` e
 `20261011-195223_app_*`.
 
@@ -379,7 +379,7 @@ Montagem como na seção 7 (robô levantado, LiPo conectada, chave à mão). Dad
 
 ### Resultados
 
-Dados: `data/day1/20261011-195756_app_*`, `20261011-195816_step.csv` e `20261011-200129_ramp.csv`
+Dados: `results/day1/20261011-195756_app_*`, `20261011-195816_step.csv` e `20261011-200129_ramp.csv`
 (resumos), e um arquivo de amostras por execução (`20261011-195817_step_1_L200_R200.csv` …
 `20261011-200158_ramp_8_dir-1_rate50.csv`).
 

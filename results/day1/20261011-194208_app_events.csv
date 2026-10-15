@@ -1,0 +1,10 @@
+rx_monotonic,event,detail
+103091.853595754,start,status=20261011-194208_app_status.csv events=20261011-194208_app_events.csv
+103091.859885046,mcu_ready,attempts=1 after=0.0s last_error=None
+103188.245017956,cmd,"step 200 200 1000 500 -> mode(2, 200, 200, 1000, 500) ack=True"
+103189.269808807,step_end,step_id=1 reason=time duration=1001ms duty_l=200 duty_r=200 counts_l=952 counts_r=1092 errors_l=0 errors_r=0 samples=501
+103189.468965676,cmd,"step 200 200 1000 500 -> mode(2, 200, 200, 1000, 500) ack=False"
+103190.615039436,step_samples,step_id=1 samples=501 file=20261011-194347_step_1_L200_R200.csv
+103198.111153053,cmd,"step -200 -200 1000 500 -> mode(2, -200, -200, 1000, 500) ack=True"
+103199.136391773,step_end,step_id=2 reason=time duration=1000ms duty_l=-200 duty_r=-200 counts_l=-842 counts_r=-1077 errors_l=0 errors_r=0 samples=501
+103200.481158134,step_samples,step_id=2 samples=501 file=20261011-194357_step_2_L-200_R-200.csv

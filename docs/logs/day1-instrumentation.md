@@ -8,7 +8,7 @@ não compilam sozinhos. Para repetir uma medição, cada trecho volta para o lug
 
 ## Resumo
 
-| # | Código retirado | Métrica | Para que serviu | Resultado | Dados (`data/day1/`) |
+| # | Código retirado | Métrica | Para que serviu | Resultado | Dados (`results/day1/`) |
 |---|---|---|---|---|---|
 | 1 | Contagem de handlers por thread + `threads` | Qual thread executa os handlers; identidade da thread `bridge` | Confirmar que um handler pode interromper o tick (base da regra da fila de comandos) e confirmar o patch 1 da Bridge | 256 chamadas na `bridge`, 95 na main; pilha de 2048 B no heap | `20261010-170912_bridge_*` |
 | 2 | Estatísticas do tick por janela + histograma | Atraso médio, dt mínimo/máximo, distribuição do atraso | Decidir se o tick fica no `loop()` ou vai para uma `k_thread` | Atraso 0–1,1 ms em 99,89 %, média 0,60 ms; dt 18,7–21,6 ms | `20261010-171517_app_tick*` |
@@ -532,7 +532,7 @@ def stress_test() -> None:
 
 ```python
 import csv
-D = "data/day1/20261010-172717_app_"
+D = "results/day1/20261010-172717_app_"
 rd = lambda n: list(csv.DictReader(open(D + n + ".csv")))
 tick, hook, ev, stress = rd("tick"), rd("hook"), rd("events"), rd("stress")
 # MCU clock (t_ms) -> Python monotonic: the least-delayed message gives the offset

@@ -1,9 +1,9 @@
 """Day 1 analysis: the closed-loop speed tests on the arena floor (PC only).
 
-Reads one app session of `speed` recordings from data/day1/ (listed in its events log),
+Reads one app session of `speed` recordings from results/day1/ (listed in its events log),
 measures the ramp tracking error and the step overshoot and settling time per wheel,
 compares them with the simulation of the design model, and writes
-data/day1/plots/closed_loop.csv and the plots.
+results/day1/plots/closed_loop.csv and the plots.
 
 Definitions (docs/logs/day1-analysis.md, section 7):
 - interval speed: count delta between two samples over their time difference;
@@ -33,7 +33,7 @@ import numpy as np
 from day1_identify import AMP_COLORS, INK, MUTED, PLOTS, style
 from speed_loop import MM_PER_COUNT, WheelModel, ramp_profile, simulate, step_profile
 
-DATA = Path(__file__).resolve().parent.parent / "data" / "day1"
+DATA = Path(__file__).resolve().parent.parent / "results" / "day1"
 # Closed-loop floor session of 2026-10-11, 12.6 V (docs/logs/day1-analysis.md, section 7).
 SESSION = DATA / "20261011-222209_app_events.csv"
 SMOOTH = 5  # intervals, 100 ms

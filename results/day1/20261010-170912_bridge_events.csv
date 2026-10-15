@@ -1,0 +1,8 @@
+rx_monotonic,event,detail
+7516.066128678,start,diag=20261010-170912_bridge_diag.csv events=20261010-170912_bridge_events.csv
+7516.072272722,mcu_ready,attempts=1 after=0.0s last_error=None
+7516.113112872,set_path_int,"id=1 bytes=213 ack=True path_rx=(64, 2050960) expected=(64, 2050960) ok=True"
+7516.119419783,set_path_float,id=2 bytes=597 rejected=Request 'set_path' failed: message size exceeds the limit (6)
+7516.128340063,set_path_int,"id=3 bytes=31 ack=True path_rx=(4, 9670) expected=(4, 9670) ok=True"
+7516.128867674,size_test,int_acked=True float_rejected=True mcu_alive_after=True pass=True
+7516.154909598,threads,main=0x20001320 loop=0x20001320 handler_thread=0x2001bb68 name='bridge' stack_start=0x2000afe0 stack_size=2048

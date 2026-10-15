@@ -1,0 +1,20 @@
+rx_monotonic,event,detail
+103706.397075523,start,status=20261011-195223_app_status.csv events=20261011-195223_app_events.csv
+103706.402852418,mcu_ready,attempts=1 after=0.0s last_error=None
+103723.879877916,cmd,"ramp 2 50 300 100 -> mode(3, 2, 50, 300, 100) ack=False"
+103725.694774962,cmd,"ramp 0 50 300 100 -> mode(3, 0, 50, 300, 100) ack=False"
+103727.509344039,cmd,"ramp 1 9 50 100 -> mode(3, 1, 9, 50, 100) ack=False"
+103729.323915095,cmd,"ramp 1 201 300 100 -> mode(3, 1, 201, 300, 100) ack=False"
+103731.139349436,cmd,"ramp 1 50 301 100 -> mode(3, 1, 50, 301, 100) ack=False"
+103733.155435101,cmd,"ramp 1 40 300 100 -> mode(3, 1, 40, 300, 100) ack=False"
+103734.970247096,cmd,"ramp 1 50 300 201 -> mode(3, 1, 50, 300, 201) ack=False"
+103736.789441608,cmd,"ramp 1 50 300 0 -> mode(3, 1, 50, 300, 0) ack=False"
+103861.879194839,cmd,"ramp 1 50 300 200 -> mode(3, 1, 50, 300, 200) ack=True"
+103865.238739463,ramp_end,record_id=1 duration_ms=3340 reason=distance direction=1 rate=50 last_duty=166 counts_l=1007 counts_r=1250 errors_l=0 errors_r=0 samples=169
+103865.717204181,ramp_samples,record_id=1 samples=169 file=20261011-195502_ramp_1_dir+1_rate50.csv
+103872.127254668,cmd,"ramp -1 50 300 200 -> mode(3, -1, 50, 300, 200) ack=True"
+103875.566320608,ramp_end,record_id=2 duration_ms=3420 reason=distance direction=-1 rate=50 last_duty=-170 counts_l=-949 counts_r=-1263 errors_l=0 errors_r=0 samples=173
+103876.051484305,ramp_samples,record_id=2 samples=173 file=20261011-195512_ramp_2_dir-1_rate50.csv
+103881.170158699,cmd,"step 200 200 300 500 -> mode(2, 200, 200, 300, 500) ack=True"
+103881.490585965,step_end,record_id=3 duration_ms=300 reason=time duty_l=200 duty_r=200 counts_l=213 counts_r=277 errors_l=0 errors_r=0 samples=150
+103881.861813264,step_samples,record_id=3 samples=150 file=20261011-195518_step_3_L200_R200.csv

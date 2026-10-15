@@ -1,0 +1,19 @@
+rx_monotonic,event,detail
+8600.695121302,start,diag=20261010-172717_app_diag.csv events=20261010-172717_app_events.csv
+8600.700703937,mcu_ready,attempts=1 after=0.0s last_error=None
+8600.750004264,set_path_int,"id=1 bytes=213 ack=True path_rx=(64, 2050960) expected=(64, 2050960) ok=True"
+8600.751986254,set_path_float,id=2 bytes=597 rejected=Request 'set_path' failed: message size exceeds the limit (6)
+8600.774837476,set_path_int,"id=3 bytes=31 ack=True path_rx=(4, 9670) expected=(4, 9670) ok=True"
+8600.775417895,size_test,int_acked=True float_rejected=True mcu_alive_after=True pass=True
+8600.77584019,stress_phase_start,idle
+8601.203027521,threads,main=0x20001320 loop=0x20001320 handler_thread=0x2001c320 name='bridge' stack_start=0x2000afe0 stack_size=2048
+8630.783807534,stress_phase_end,idle
+8630.784620924,stress_phase_start,ping
+8661.084539804,stress_phase_end,ping
+8661.085378402,stress_phase_start,set_path_safe
+8691.175975283,stress_phase_end,set_path_safe
+8691.176852788,stress_phase_start,set_path_bridge_only
+8721.376997169,stress_phase_end,set_path_bridge_only
+8721.377792902,stress_phase_start,idle_after
+8751.385558107,stress_phase_end,idle_after
+8751.386354205,stress_test,done

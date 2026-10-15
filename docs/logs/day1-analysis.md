@@ -13,14 +13,14 @@
 ```bash
 uv add --group analysis matplotlib numpy   # matplotlib 3.11.2, numpy 2.5.3
 uv run pytest                               # 22 passed (6 novos em tests/test_wheel_model.py)
-uv run python analysis/day1_identify.py     # tabelas abaixo + data/day1/plots/
+uv run python analysis/day1_identify.py     # tabelas abaixo + results/day1/plots/
 ```
 
 ### Saídas
 
-- `data/day1/plots/identification_steps.csv`: um ajuste por `step` e roda;
-- `data/day1/plots/identification_model.csv`: um resumo por roda e sentido;
-- `data/day1/plots/day1_step_fits.png`, `day1_slip_check.png`, `day1_speed_vs_duty.png`.
+- `results/day1/plots/identification_steps.csv`: um ajuste por `step` e roda;
+- `results/day1/plots/identification_model.csv`: um resumo por roda e sentido;
+- `results/day1/plots/day1_step_fits.png`, `day1_slip_check.png`, `day1_speed_vs_duty.png`.
 
 ## 2. Modelo de primeira ordem: K e τ pelos `step`
 
@@ -181,7 +181,7 @@ A cada tick de 20 ms, por roda, em contagens/s, com os parâmetros da roda e do 
 - **PI por cancelamento do polo:** com Ti = τ, o zero do PI cancela o polo da roda e a malha fica `C·G = 1/(Tcl·s)`; sem o feedforward, a malha fechada seria uma primeira ordem com constante Tcl.
 - **`e` usa o setpoint médio do último tick:** a velocidade medida é a média do último tick (`wheel_speed`), ou seja a velocidade de ~10 ms atrás. Comparada com o setpoint de agora, numa rampa de 0,5 m/s² ela parece 5 mm/s atrasada, e o PI empurra a roda 5 mm/s acima da referência: na simulação, o erro na rampa (depois de 0,1 s) caiu de 6,2 para 2,2 mm/s e a velocidade no fim da rampa de 0,256 para 0,252 m/s. Isso é guardar o setpoint do tick anterior e usar a média dos dois, que numa rampa é o setpoint de 10 ms atrás (a simulação provisória usou esse; a final e o firmware usam a média).
 
-### Ganhos (`data/day1/plots/pi_gains.csv`)
+### Ganhos (`results/day1/plots/pi_gains.csv`)
 
 | roda | sentido | K (contagens/s por unidade) | τ (ms) | `pwm0` (%) | Kp (duty por contagem/s) | Ki (duty por contagem) |
 |---|---|---|---|---|---|---|
@@ -195,7 +195,7 @@ Leitura: um erro de 100 contagens/s (16 mm/s) dá ~2 % de duty pelo P; o mesmo e
 ### Comandos
 
 ```bash
-uv run python analysis/day1_pi.py   # ganhos, simulação e data/day1/plots/day1_pi_sim.png
+uv run python analysis/day1_pi.py   # ganhos, simulação e results/day1/plots/day1_pi_sim.png
 uv run pytest                       # 27 passed (5 novos em tests/test_speed_loop.py)
 ```
 
@@ -260,7 +260,7 @@ Cada roda e sentido, com o modelo de projeto (τ médio) e com o menor e o maior
 uv run python analysis/day1_closed_loop.py
 ```
 
-Dados: `data/day1/20261011-222209_app_{events,status,hook}.csv`, `20261011-222351_speed.csv`
+Dados: `results/day1/20261011-222209_app_{events,status,hook}.csv`, `20261011-222351_speed.csv`
 (resumos) e um arquivo por execução, `20261011-222351_speed_1_v250_a500.csv` (sem motor) …
 `20261011-222613_speed_5_v-100_a0.csv`.
 
@@ -286,7 +286,7 @@ Dados: `data/day1/20261011-222209_app_{events,status,hook}.csv`, `20261011-22235
 - **Degrau:** sobressinal e acomodação sobre a velocidade suavizada, antes de a parada começar. Na velocidade constante a curva suavizada ainda oscila ±3–5 mm/s, do tamanho da faixa de ±5 % a 0,1 m/s, então a acomodação vai com ±5 % e com ±10 %.
 - A simulação do modelo de projeto (`speed_loop.simulate`, seção 5) vai pontilhada nos gráficos.
 
-### Resultados (`data/day1/plots/closed_loop.csv`, `day1_closed_loop_ramp.png`, `day1_closed_loop_step.png`)
+### Resultados (`results/day1/plots/closed_loop.csv`, `day1_closed_loop_ramp.png`, `day1_closed_loop_step.png`)
 
 **Rampa de 0,5 m/s² até 0,25 m/s** (mm/s; s = suavizado em 100 ms):
 
