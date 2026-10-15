@@ -66,10 +66,7 @@ At start, Python discards any command left in `cmd/` while the app was stopped, 
 
 | Command | What it does |
 |---|---|
-| `count start`, `count stop` | count encoder edges while the wheels are turned by hand |
 | `idle` | end the current mode |
-| `step <duty_l> <duty_r> <time_ms> <dist_mm>` | open-loop duty step, duties in thousandths (±300) |
-| `ramp <dir> <rate> <max_duty> <dist_mm>` | slow open-loop duty ramp (`dir` ±1, rate in thousandths per second) |
 | `speed <v_mm_s> <accel_mm_s2> <time_ms> <dist_mm>` | closed-loop speed test of the wheel PI (`accel` 0 = step) |
 
 **Logs.** Each run writes CSV files with unique names to `/app/logs/` on the board. Between runs:

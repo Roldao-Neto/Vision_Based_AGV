@@ -6,9 +6,8 @@ namespace modes {
     
     enum Mode : int32_t {
         kIdle = 0,
-        kCount = 1,
-        kStep = 2,
-        kRamp = 3,
+        // 1-3 were the Day 1 identification modes (count, step, ramp), kept out of use so
+        // the Day 1 records keep their meaning
         kSpeed = 4,
     };
     
@@ -23,13 +22,6 @@ namespace modes {
     constexpr int kParams = 4;
     
     // Firmware caps, whatever Python sends
-    constexpr int32_t kMaxDutyPermille = 300;
-    constexpr int32_t kStepMaxTimeMs = 1000;
-    constexpr int32_t kStepMaxDistanceMm = 500;
-    constexpr int32_t kRampMinRate = 10;  // thousandths per second
-    constexpr int32_t kRampMaxRate = 200;
-    constexpr int32_t kRampMaxTimeMs = 6000;
-    constexpr int32_t kRampMaxDistanceMm = 200;
     constexpr int32_t kSpeedMaxMmS = 300;
     constexpr int32_t kSpeedMinAccelMmS2 = 100;
     constexpr int32_t kSpeedMaxAccelMmS2 = 500;

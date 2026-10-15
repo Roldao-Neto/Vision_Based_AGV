@@ -66,7 +66,6 @@ void setup()
 {
     motor_driver::begin(); // the result goes out in status (pwm_hz, pwm_err)
     encoders::begin();
-    samples::begin();
     commands::begin();
 
     Bridge.begin();

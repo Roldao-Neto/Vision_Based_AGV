@@ -1,8 +1,8 @@
-"""Reassembly of the sample notifications of one recorded run (step, ramp).
+"""Reassembly of the sample notifications of one recorded run (speed).
 
 The MCU sends <name>(record_id, first_index, total, [values...]) in order, with a fixed
-number of values per sample (step: t_us, counts_l, counts_r; ramp: t_us, duty,
-counts_l, counts_r). Every notification carries the total, so a run is complete when
+number of values per sample (speed: t_us, v_ref, counts_l, counts_r, duty_l,
+duty_r). Every notification carries the total, so a run is complete when
 the samples received so far are exactly 0..total-1, and a gap in first_index means a
 notification was lost (the run is then repeated instead of fitted).
 """

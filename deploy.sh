@@ -4,7 +4,7 @@
 
 #   ./deploy.sh [--no-follow]   stop the running app, sync app.yaml, python/, sketch/, bricks/ and models/, start this app, check its libraries, follow its logs
 #   ./deploy.sh pull <day>      stop the running app, move /app/logs/* into data/<day>/ and leave the app stopped (only between runs)
-#   ./deploy.sh run <command>   send a command to the running app (e.g. `run count start`), then show its latest events
+#   ./deploy.sh run <command>   send a command to the running app (e.g. `run idle`), then show its latest events
 
 # The board is reached through the ssh alias in BOARD (default "unoq", see ~/.ssh/config).
 set -euo pipefail

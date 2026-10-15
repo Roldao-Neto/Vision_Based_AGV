@@ -1,25 +1,17 @@
 #include "samples.h"
 #include <Arduino.h>
-#include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
-#include "../config/config.h"
-#include "../encoders/encoders.h"
-
-using namespace config;
 
 namespace samples
 {   
-    constexpr uint32_t kTimerPeriodMs = 2;
-    constexpr uint32_t kCapacity = 520 * 3;
+    constexpr uint32_t kCapacity = 520 * 3; // 260 samples of a speed run (6 values)
     constexpr uint32_t kTicksPerNotification = 2;
     
     static int32_t buffer[kCapacity];
-    static volatile uint32_t n_samples; // written by the timer interrupt while it samples
+    static uint32_t n_samples;
     static uint32_t width;              // values per sample
     static uint32_t max_samples;
     static uint32_t start_us;
-    static int32_t start_count[2];
-    static struct k_timer timer;
     
     static const char *notify_name;
     static int32_t id;
@@ -28,11 +20,6 @@ namespace samples
     static uint32_t next_to_send;
     static uint32_t ticks_since_send;
     static atomic_t busy_flag = ATOMIC_INIT(0);
-    
-    int32_t counts_since_start(int wheel)
-    {
-        return encoders::count((Wheel)wheel) - start_count[wheel];
-    }
     
     uint32_t us_since_start()
     {
@@ -51,31 +38,8 @@ namespace samples
         n_samples = n + 1;
     }
     
-    static void add_counts()
-    {
-        const int32_t values[3] = {
-            (int32_t)us_since_start(),
-            counts_since_start(kLeft),
-            counts_since_start(kRight)
-        };
-        
-        add(values);
-    }
-    
-    // System clock interrupt
-    static void on_timer(struct k_timer *)
-    {
-        add_counts();
-    }
-    
-    void begin()
-    {
-        k_timer_init(&timer, on_timer, nullptr);
-    }
-    
     void start(const char *name, int32_t record_id, uint32_t values_per_sample, uint32_t per_notification)
     {
-        k_timer_stop(&timer);
         atomic_set(&busy_flag, 1);
         notify_name = name;
         id = record_id;
@@ -85,19 +49,10 @@ namespace samples
         sending = false;
         n_samples = 0;
         start_us = micros();
-        start_count[kLeft] = encoders::count(kLeft);
-        start_count[kRight] = encoders::count(kRight);
-    }
-    
-    void start_count_timer()
-    {
-        add_counts();
-        k_timer_start(&timer, K_MSEC(kTimerPeriodMs), K_MSEC(kTimerPeriodMs));
     }
     
     void stop()
     {
-        k_timer_stop(&timer);
         sending = true;
         next_to_send = 0;
         ticks_since_send = kTicksPerNotification; // first notification at the next tick() call, in this same tick

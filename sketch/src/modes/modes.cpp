@@ -20,20 +20,9 @@ namespace modes
     static int32_t count_start[2];
     static uint32_t errors_start[2];
     
-    // Recorded runs (step, ramp)
+    // Recorded runs
     static int32_t record_id;
     static int32_t limit_counts;
-    
-    // step
-    static int32_t step_duty[2];
-    static uint32_t step_time_ms;
-    
-    // ramp
-    static int32_t ramp_direction;
-    static int32_t ramp_rate;
-    static int32_t ramp_max;
-    static uint32_t ramp_time_ms;
-    static int32_t ramp_duty;
     
     // speed
     static int32_t speed_mm_s, speed_accel_mm_s2;
@@ -60,24 +49,6 @@ namespace modes
         return true;
     }
     
-    static bool valid_step(const int32_t params[kParams])
-    {
-        for (int w = 0; w < 2; w++) {
-            if (params[w] < -kMaxDutyPermille || params[w] > kMaxDutyPermille) {
-                return false;
-            }
-        }
-        return params[2] >= 1 && params[2] <= kStepMaxTimeMs && params[3] >= 1 && params[3] <= kStepMaxDistanceMm;
-    }
-    
-    static bool valid_ramp(const int32_t params[kParams])
-    {
-        const int32_t direction = params[0], rate = params[1], max_duty = params[2], distance = params[3];
-        return (direction == 1 || direction == -1) && rate >= kRampMinRate && rate <= kRampMaxRate && max_duty >= 1 &&
-               max_duty <= kMaxDutyPermille && max_duty * 1000 <= kRampMaxTimeMs * rate && distance >= 1 &&
-               distance <= kRampMaxDistanceMm;
-    }
-    
     static bool valid_speed(const int32_t params[kParams])
     {
         const int32_t v = params[0], accel = params[1], time_ms = params[2], distance = params[3];
@@ -92,12 +63,6 @@ namespace modes
         {
             case kIdle:
                 return all_zero(params);
-            case kCount:
-                return all_zero(params);
-            case kStep:
-                return valid_step(params) && !samples::busy();
-            case kRamp:
-                return valid_ramp(params) && !samples::busy();
             case kSpeed:
                 return valid_speed(params) && !samples::busy();
             default:
@@ -141,42 +106,6 @@ namespace modes
         motor_driver::set_duty(config::kRight, duty_r);
     }
     
-    static void end_count()
-    {
-        const uint32_t now_ms = millis();
-        Bridge.notify("count", now_ms, now_ms - start_ms, counts_since_start(config::kLeft),
-                      counts_since_start(config::kRight), errors_since_start(config::kLeft),
-                      errors_since_start(config::kRight));
-    }
-    
-    static void start_step(const int32_t params[kParams])
-    {
-        take_encoder_start();
-        step_duty[config::kLeft] = params[0];
-        step_duty[config::kRight] = params[1];
-        step_time_ms = (uint32_t)params[2];
-        limit_counts = distance_to_counts(params[3]);
-        record_id++;
-        samples::start("step_samples", record_id, 3, 15);
-        samples::start_count_timer();
-        set_both((float)step_duty[config::kLeft] / 1000.0f, (float)step_duty[config::kRight] / 1000.0f);
-    }
-    
-    static void start_ramp(const int32_t params[kParams])
-    {
-        take_encoder_start();
-        ramp_direction = params[0];
-        ramp_rate = params[1];
-        ramp_max = params[2];
-        ramp_time_ms = (uint32_t)((ramp_max * 1000 + ramp_rate - 1) / ramp_rate);
-        limit_counts = distance_to_counts(params[3]);
-        ramp_duty = 0;
-        record_id++;
-        samples::start("ramp_samples", record_id, 4, 14);
-        const int32_t sample0[4] = {0, 0, 0, 0};
-        samples::add(sample0);
-    }
-    
     static void start_speed(const int32_t params[kParams])
     {
         take_encoder_start();
@@ -207,53 +136,12 @@ namespace modes
         }
     }
     
-    // Open loop, so a recorded run ends by coasting both wheels (ignored while the
-    // emergency holds the brake). The samples stop first, so they cover the driven part.
+    // A recorded run ends by coasting both wheels (ignored while the emergency holds the
+    // brake). The samples stop first, so they cover the driven part.
     static void stop_recorded()
     {
         samples::stop();
         set_both(0.0f, 0.0f);
-    }
-    
-    static void end_step(int32_t reason)
-    {
-        stop_recorded();
-        const uint32_t now_ms = millis();
-        Bridge.notify(
-            "step_end",
-            now_ms,
-            record_id,
-            now_ms - start_ms,
-            reason,
-            step_duty[config::kLeft],
-            step_duty[config::kRight],
-            counts_since_start(config::kLeft),
-            counts_since_start(config::kRight),
-            errors_since_start(config::kLeft),
-            errors_since_start(config::kRight),
-            samples::count()
-        );
-    }
-    
-    static void end_ramp(int32_t reason)
-    {
-        stop_recorded();
-        const uint32_t now_ms = millis();
-        Bridge.notify(
-            "ramp_end",
-            now_ms,
-            record_id,
-            now_ms - start_ms,
-            reason,
-            ramp_direction,
-            ramp_rate,
-            ramp_direction * ramp_duty,
-            counts_since_start(config::kLeft),
-            counts_since_start(config::kRight),
-            errors_since_start(config::kLeft),
-            errors_since_start(config::kRight),
-            samples::count()
-        );
     }
     
     static void end_speed(int32_t reason)
@@ -277,19 +165,8 @@ namespace modes
     
     static void end_current(int32_t reason)
     {
-        switch (mode) {
-        case kCount:
-            end_count();
-            break;
-        case kStep:
-            end_step(reason);
-            break;
-        case kRamp:
-            end_ramp(reason);
-            break;
-        case kSpeed:
+        if (mode == kSpeed) {
             end_speed(reason);
-            break;
         }
         mode = kIdle;
     }
@@ -297,19 +174,8 @@ namespace modes
     static void start(int32_t code, const int32_t params[kParams])
     {
         mode = code;
-        switch (mode) {
-        case kCount:
-            take_encoder_start();
-            break;
-        case kStep:
-            start_step(params);
-            break;
-        case kRamp:
-            start_ramp(params);
-            break;
-        case kSpeed:
+        if (mode == kSpeed) {
             start_speed(params);
-            break;
         }
     }
     
@@ -323,32 +189,6 @@ namespace modes
         }
         end_current(kEndCommand);
         start(code, params);
-    }
-    
-    static void tick_ramp()
-    {
-        const uint32_t elapsed_ms = millis() - start_ms;
-    
-        const int32_t values[4] = {
-            (int32_t)samples::us_since_start(),
-            ramp_direction * ramp_duty,
-            counts_since_start(config::kLeft),
-            counts_since_start(config::kRight)
-        };
-        
-        samples::add(values);
-        
-        if (elapsed_ms >= ramp_time_ms) {
-            end_current(kEndTime);
-            return;
-        }
-        if (distance_reached()) {
-            end_current(kEndDistance);
-            return;
-        }
-        ramp_duty = min(ramp_max, (int32_t)((int64_t)ramp_rate * elapsed_ms / 1000));
-        const float duty = (float)(ramp_direction * ramp_duty) / 1000.0f;
-        set_both(duty, duty);
     }
     
     static void tick_speed()
@@ -422,7 +262,7 @@ namespace modes
     
     void tick()
     {
-        if (mode != kStep && mode != kRamp && mode != kSpeed) {
+        if (mode != kSpeed) {
             return;
         }
         if (bridge_stack::emergency()) {
@@ -430,21 +270,7 @@ namespace modes
             end_current(kEndEmergency);
             return;
         }
-        if (mode == kSpeed) {
-            tick_speed();
-            return;
-        }
-        if (mode == kRamp) {
-            tick_ramp();
-            return;
-        }
-        if (millis() - start_ms >= step_time_ms) {
-            end_current(kEndTime);
-            return;
-        }
-        if (distance_reached()) {
-            end_current(kEndDistance);
-        }
+        tick_speed();
     }
     
     int32_t current()
