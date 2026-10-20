@@ -19,7 +19,7 @@ static bool near(float a, float b, float tol)
     return std::fabs(a - b) <= tol;
 }
 
-static const heading_pi::Config kConfig = {2.0f, 1.0f, 0.0f, 0.5f};
+static const heading_pi::Config kConfig = {2.0f, 1.0f, 0.5f};
 
 static void test_wrap()
 {
