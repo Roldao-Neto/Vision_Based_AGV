@@ -67,7 +67,10 @@ At start, Python discards any command left in `cmd/` while the app was stopped, 
 | Command | What it does |
 |---|---|
 | `idle` | end the current mode |
-| `speed <v_mm_s> <accel_mm_s2> <time_ms> <dist_mm>` | closed-loop speed test of the wheel PI (`accel` 0 = step) |
+| `straight <v_mm_s> <accel_mm_s2> <time_ms> <dist_mm>` | drive `dist_mm` along the start heading (`v` negative = backward) and stop there, heading held by the heading PI |
+| `umbmark <dir> <side_mm> <v_mm_s> <time_ms>` | UMBmark square, `dir` 1 = CCW, −1 = CW: four legs, a 90° turn in place after each |
+
+Both end with a `<mode>_end` event (the odometry poses at the start and the end) and a `*_<mode>_<id>_….csv` with one sample per 20 ms tick.
 
 **Logs.** Each run writes CSV files with unique names to `/app/logs/` on the board. Between runs:
 
@@ -79,7 +82,18 @@ At start, Python discards any command left in `cmd/` while the app was stopped, 
 
 ## Calibration
 
-_To be written on Day 2: encoder counts per revolution, mm/tick per wheel, track width, UMBmark._
+Odometry uses one distance per encoder count for each wheel and the track b (`kOdometry` in `sketch/src/config/config.h`). Each value comes from a measurement:
+
+| Parameter | How it is obtained | Value |
+|---|---|---|
+| Encoder counts per wheel revolution | 3 runs of 10 turns by hand (Day 1, `count` mode) | 1319.7 (left), 1319.8 (right), ±0.5; 1319.75 used for both |
+| Nominal distance per count | π · 67.5 mm / 1319.75 | 0.16068 mm |
+| Scale Es (mean distance per count) | 5 straight runs of 1403 mm, A→B, real distance (tape) ÷ odometry distance | pending (Day 2 bench, S1) |
+| Wheel ratio Ed, track error Eb | UMBmark (Borenstein and Feng 1996): 5 CW + 5 CCW 1 m squares, real − odometry end position, the paper's Eqs. 4.20–4.27 | pending (Day 2 bench, U1) |
+| Distance per count, left / right | Es-corrected mean × c_L / c_R = 2/(Ed + 1), 2/(1/Ed + 1) | pending |
+| Track b | 0.217 m × Eb | pending |
+
+Every real pose is measured by taping both rear corners of the robot from the walls. The analysis is `analysis/day2_bench.py` (method and data format in `docs/logs/day2-bench.md`).
 
 ## Running a mission
 

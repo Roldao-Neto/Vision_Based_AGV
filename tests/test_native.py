@@ -13,6 +13,9 @@ NATIVE = Path(__file__).resolve().parent / "native"
 # test file -> sketch module sources it needs
 SUITES = {
     "test_encoder_guard.cpp": ["encoder_guard/encoder_guard.cpp"],
+    "test_heading_pi.cpp": ["heading_pi/heading_pi.cpp"],
+    "test_motion_profile.cpp": ["motion_profile/motion_profile.cpp"],
+    "test_odometry.cpp": ["odometry/odometry.cpp"],
     "test_wheel_pi.cpp": ["wheel_pi/wheel_pi.cpp"],
 }
 

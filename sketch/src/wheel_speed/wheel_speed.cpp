@@ -43,5 +43,10 @@ namespace wheel_speed
     {
         return last_dt_us;
     }
+    
+    int32_t count(Wheel wheel)
+    {
+        return last_count[wheel];
+    }
 
 }

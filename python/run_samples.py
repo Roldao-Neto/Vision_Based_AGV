@@ -1,7 +1,7 @@
-"""Reassembly of the sample notifications of one recorded run (speed).
+"""Reassembly of the sample notifications of one recorded run (straight, umbmark).
 
-The MCU sends <name>(record_id, first_index, total, [values...]) in order, with a fixed
-number of values per sample (speed: t_us, v_ref, counts_l, counts_r, duty_l,
+The MCU sends run_samples(record_id, first_index, total, [values...]) in order, with a fixed
+number of values per sample (t_us, phase, v_mm_s, w_mrad_s, counts_l, counts_r, duty_l,
 duty_r). Every notification carries the total, so a run is complete when
 the samples received so far are exactly 0..total-1, and a gap in first_index means a
 notification was lost (the run is then repeated instead of fitted).

@@ -8,6 +8,27 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 - A day is not finished until its *Done when* holds. If a day slips, eat into Day 8, not into the next day's scope.
 - Agreed design decisions are summarized in [`../CLAUDE.md`](../CLAUDE.md).
 
+### Experiments for the thesis
+
+Every measurement the thesis reports, with its repetitions. The details are in each day.
+
+| Day | Experiment | Repetitions | Measured | Status |
+|---|---|---|---|---|
+| 1 | Wheel identification (open loop) | 6 steps (±20, ±25, ±30 %) + 2 ramps | K, τ, `pwm0` per wheel and direction | done |
+| 1 | Wheel speed loop (closed loop) | ramp and step, forward and backward | tracking error, overshoot, settling | done |
+| 2 | Odometry cross-check, firmware vs Python | every calibration run | end-pose difference | done for `straight` (floor) and `umbmark` (off the floor) |
+| 2 | Straight runs **before** calibration (nominal constants) | 5 × A→B | along-line, lateral and heading error | |
+| 2 | Scale (Es) correction | from those 5 runs | mean m/count | |
+| 2 | UMBmark **before** (Es corrected) | 5 CW + 5 CCW | error clusters, E_max,syst | |
+| 2 | Ed and Eb correction (Borenstein) | from those 10 runs | m/count per wheel, b | |
+| 2 | **After** calibration | 5 × A→B + 5 CW + 5 CCW UMBmark | the same | |
+| 3 | A→B without obstacles | 5 in a row, then one multi-waypoint path 3 times | arrival error of the center, odometry error | |
+| 5 | Distance methods (a) k/h and (b) homography | per class: 0.3–1.0 m every 0.1 m, centered and to each side, 20 detections per position | error versus distance | |
+| 5 | Distance while driving and braking | 5 approaches per class | error versus the static curve | |
+| 7 | S0 / S1 / S2 missions | 10 each | success, arrival error, detection distance, replans, time | |
+
+Every real pose is measured the same way: tape both rear corners of the robot (x from the back wall, y from the side wall) → reference point and heading (see Day 2, Bench).
+
 ---
 
 ## Day 1 — Toolchain and wheel speed control
@@ -51,24 +72,51 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 
 ## Day 2 — Straight line, odometry and calibration
 
-**Firmware**
-- [ ] Odometry at 20 ms (midpoint integration):
+**Firmware** (details in `docs/logs/day2-firmware.md`)
+- [x] Starting point: `main` cleaned of the Day 1 identification code (archived in branch `day1`, tag `day1-final`), checked on the floor with `speed`: same tracking as Day 1, 0 overruns.
+- [x] Odometry at 20 ms (midpoint integration):
   `d = (dL + dR)/2`, `dθ = (dR − dL)/b`, `x += d·cos(θ + dθ/2)`, `y += d·sin(θ + dθ/2)`, `θ += dθ`.
-- [ ] Heading PID with a fixed target, used for driving straight; wheel setpoints `vL = v − ω·b/2`, `vR = v + ω·b/2`.
-- [ ] Calibration modes: `straight` (fixed distance), `spin` (N turns in place), `umbmark` (square path, CW or CCW). They already use the 0.5 m/s² ramp (and the angular ramp α = 2a/b, see `CLAUDE.md`, Motion), because a step to 0.25 m/s slips the wheels and corrupts mm/tick and b. Each one also has the Day 1 time limit, since its distance or turn target is measured by the encoders and a failed encoder would never reach it.
+  Pure module `odometry` (native tests), m/count per wheel, θ not wrapped, `double` (a `float` θ drifts ~4·10⁻⁴ rad in two turns); one count read per tick shared with the recorded samples; pose in `status`. Checked by hand (pose = formula on the counts) and on the floor (997.4 mm by odometry for 998.3 mm of counts).
+- [x] Heading PID with a fixed target, used for driving straight; wheel setpoints `vL = v − ω·b/2`, `vR = v + ω·b/2`.
+  - [x] PI (D = 0, decided by Rolds), Kp = 2.3 s⁻¹, Ti = 1.0 s from `analysis/day2_heading.py` (without it 103 mm of lateral drift in the simulated 1.38 m, with it < 1 mm); pure module `heading_pi` and the wheel layer `drive`. The PI holds the odometry heading, so it only corrects what the encoders see; wheel-size errors are for the calibration.
+  - [x] Off the floor: sign right, heading within ±3 mrad at cruise.
+  - [x] On the floor (5 runs on the A→B line, both directions): heading within ±5 mrad and lateral offset within ±0.3 mm by the encoders. Each run ends 1–5 mrad off its start heading (steering holds in the last 1.5 cm), which the next run inherits.
+- [x] Calibration modes: `straight` (fixed distance), `umbmark` (square path, CW or CCW). `spin` (N turns in place) was dropped on Day 2 (decided by Rolds): UMBmark already gives b (Eb), so the bench does not need it (see Bench). They already use the 0.5 m/s² ramp (and the angular ramp α = 2a/b, see `CLAUDE.md`, Motion), because a step to 0.25 m/s slips the wheels and corrupts mm/tick and b. Each one also has the Day 1 time limit, since its distance or turn target is measured by the encoders and a failed encoder would never reach it.
+  - [x] `straight` (5), developed from `speed` in place: stops at the target along the start heading (`motion_profile`, the `CLAUDE.md` law), ends by target (reason 6), time, a 10 cm overshoot guard, command or encoder guard; `run_end` / `run_samples` for the Python cross-check. Off the floor: 1379.2 mm for 1380, 499.2 mm backwards for 500, time and command ramped stops.
+  - [x] `straight` on the floor: 5 × 1380 mm forward and backward, all by target; the cross-check agrees within 0.6 µm / 0.6 µrad. The real distance per count is for the bench.
+  - [x] In-place rotation on the angular profile (α = 2a/b, ends with ω = 0 below 3°, see `CLAUDE.md`, Motion), used by `umbmark` and by Day 3's ROTATE. Off the floor each 90° turn ends 0.5–0.75° short of its target (the wheels stop ~2 ticks ahead of the ramp-down, most likely because the feedforward, identified on the floor, over-brakes the unloaded wheels; the floor runs will show the real value); the next leg's heading PI takes it up.
+  - [x] `umbmark` (6): `umbmark <dir> <side_mm> <v_mm_s> <time_ms>`, dir 1 = CCW, −1 = CW; four legs to corners and four 90° turns to headings fixed by the start pose, the fourth turn back to the start heading (as in the paper, Sec. 3.3 and 5); legs at 0.5 m/s², turns at 90°/s; time ≤ 30 s. Off the floor: 23.3 s per square at 250 mm/s, ends by target, ramped stops by command and time mid-turn.
+  - [x] Retire `speed` (4): code 4 stays unused, like 1–3.
 
-**Linux / PC**
-- [ ] Python reference implementation of the odometry + pytest, fed with recorded tick logs, to cross-check the firmware.
+**Linux / PC** (details in `docs/logs/day2-linux.md`)
+- [x] Python reference implementation of the odometry + pytest, fed with recorded tick logs, to cross-check the firmware: `analysis/odometry.py`, `tests/test_odometry.py`, `analysis/day2_odometry_check.py`. The four off-floor `straight` runs agree within 0.8 µm and 0.5 µrad.
+- [x] The same check on `umbmark` (four off-floor runs within 0.9 µm and 0.9 µrad), plus a per-phase table (where each leg and turn ended against its target) and the path plot.
 
-**Bench**
-- [ ] mm/tick per wheel: drive the A→B line (1.38 m) 5 times and tape-measure the real distance.
-- [ ] Track width b: 5 × 360° spins in place (nominal 21.7 cm).
-- [ ] UMBmark: 1 × 1 m square, 5 runs CW + 5 runs CCW → correction factors for wheel-diameter and track-width errors.
+**Bench** (log `docs/logs/day2-bench.md`; tape values in `data/day2/bench_<step>.csv`, analysis in `analysis/day2_bench.py`).
+- [x] Analysis ready before the measurements: real pose from the corners, errors, Es, the paper's UMBmark formulas and corrections (`analysis/bench.py`, tested on a simulated robot with known Ed and Eb in `tests/test_bench.py`), the CSV format and the per-run procedure (`docs/logs/day2-bench.md`, item 0).
+
+The order follows UMBmark (Borenstein and Feng, "Measurement and Correction of Systematic Odometry Errors in Mobile Robots", IEEE Trans. Robotics and Automation 12(6), 869–880, 1996, Section 2.2). UMBmark measures the wheel-diameter ratio Ed and the wheelbase error Eb, and assumes the scaling error Es (the mean real wheel diameter versus the nominal one, i.e. the mean m/count) has already been measured with a tape and corrected. Es also changes every turn, so if it is left in, UMBmark reads it as a wheelbase error.
+
+Setup, once:
+- Tape a straight reference line on the floor along y = 0.745 m, from behind A to past B, and mark A_ref (0.137, 0.745) and B_ref (1.540, 0.745) on it (`CLAUDE.md`, Arena and goal). Mark the two UMBmark starts for the reference point, (0.459, 0.25) and (0.459, 1.25), so the axle starts at x = 0.50.
+- **Real pose**, the same for every run here and on Days 3 and 7: tape both rear corners of the robot, x from the back wall and y from the side wall, to 1 mm → the reference point (their midpoint, 0.75 mm behind it) and the heading (the corner-to-corner line is perpendicular to it). The odometry pose comes from the run's `run_end`. Every error is **real − odometry** (the paper's Eq. 3.1, decided by Rolds), each displacement taken in its run's start frame. Taping the start corners too is optional (blank = the mark, θ0 = 0) and recommended for the straight runs, where 0.5° of start heading moves the end ~12 mm sideways.
+- **Placing the robot**: reference point on the mark, rear edge square to the line (a set square against the tape), before every run.
+- **Battery**: charge the LiPo before each phase and write its voltage at the start and the end of the phase.
+- Pull the logs after each phase (`./deploy.sh pull day2`).
+
+Each correction changes `config.h`, then deploy and log.
+1. [ ] **S1, straight before**, nominal constants (m/count = π·67.5 mm/1319.75 on both wheels, b = 0.217 m): 5 × `straight 250 500 8000 1403` from A_ref → error along the line, lateral error and heading at the end, real − odometry.
+2. [ ] **Es**: both m/count × (mean real distance / mean odometry distance) of S1.
+3. [ ] **U1, UMBmark before**, with Es corrected: 1 × 1 m square, 5 × CCW `umbmark 1 1000 250 30000` with the axle starting at (0.50, 0.25) and 5 × CW `umbmark -1 1000 250 30000` starting at (0.50, 1.25), θ0 = 0. Both use the same square, whose corners keep the 21.6 cm rotation sweep 34 mm inside the walls. Real end pose minus odometry end pose → the CW and CCW error clusters and their centroids.
+4. [ ] **Ed and Eb** from U1 with the paper's formulas: Ed sets the ratio of the two m/count, keeping their mean from step 2; b = Eb × 0.217 m.
+5. [ ] **After**, calibrated constants: S2 = 5 × `straight 250 500 8000 1403` and U2 = 5 CCW + 5 CW UMBmark, the same as S1 and U1.
+
+For the thesis: the straight runs nominal → fully calibrated (S1 versus S2, mean ± standard deviation of the along-line, lateral and heading errors), and the paper's before and after of Ed and Eb (U1 versus U2: the clusters on one plot, with E_max,syst, the larger distance of the two centroids from the origin of the error plane).
 
 **README:** fill *Calibration* with the measured values and how each one was obtained.
 
-**Done when:** calibrated parameters are stored in the firmware and a 1.38 m straight run ends with a measured lateral error.
-**Record:** mm/tick L/R, b, UMBmark error clusters before/after correction.
+**Done when:** calibrated parameters are stored in the firmware and steps 1–5 are recorded.
+**Record:** mm/tick L/R, b; S1/S2 errors; UMBmark error clusters U1/U2 and E_max,syst before/after correction.
 
 ---
 
@@ -93,7 +141,7 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 
 **Linux**
 - [ ] Mission manager, in its own thread and the only sender of motion commands (see `CLAUDE.md`, Bridge limits and threading):
-  - `reset_pose` with the start axle pose (275, 745, 0);
+  - `reset_pose` with the start axle pose (178, 745, 0);
   - sends the path, only while the robot is stopped (see `CLAUDE.md`, Bridge limits: a 32-waypoint `set_path` holds the tick off ~35 ms while it arrives);
   - waits for ARRIVED on the last `wp_idx` of the current `path_id`.
   Bridge `call`s are never made from inside a `Bridge.provide` handler (it raises `RuntimeError`).
@@ -107,8 +155,8 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 
 **README:** fill *Running a mission* (Flask UI, Bridge messages, where logs are saved).
 
-**Done when:** A→B with the robot center reaching (1.725, 0.745) within 5 cm several times in a row, plus one hand-written multi-waypoint path.
-**Record:** arrival error of each test run.
+**Done when:** A→B with the robot center reaching B = (1.651, 0.745) within 5 cm in 5 runs in a row, plus one hand-written multi-waypoint path run 3 times.
+**Record:** arrival error of each run (real pose from the rear corners, as in Day 2) and the odometry error (real versus reported pose).
 
 ---
 
@@ -127,7 +175,7 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 **PC (in parallel while training runs, pytest)**
 - [ ] Occupancy grid 5 cm (40 × 30 cells), in axle coordinates.
 - [ ] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner). Free axle corridor: x ∈ [0.246, 1.754], y ∈ [0.246, 1.254].
-- [ ] Escape rule for replanning only: if the robot's current cell is inflated, allow crossing inflated (never raw obstacle) cells at extra cost until the first free cell; log every use. A and B are placed so the start and goal cells are always free.
+- [ ] Escape rule for replanning only: if the robot's current cell is inflated, allow crossing inflated (never raw obstacle) cells at extra cost until the first free cell; log every use. The start cell is inside the wall inflation since A was re-measured on Day 2 (`CLAUDE.md`, Arena and goal): decide before this day how the first plan leaves it.
 - [ ] Dijkstra, 8 neighbours (diagonal cost √2), no corner cutting.
 - [ ] Line-of-sight path simplification on the inflated grid.
 - [ ] Detection association: same class within ~20 cm = same obstacle (average its position). The radius is a parameter, revisited on Day 5.
@@ -158,8 +206,8 @@ detecting obstacles with the camera and replanning around them on an occupancy g
 - [ ] `Camera.open()` only enforces focus; make it also fail when zoom (and exposure / white balance) do not stick, since a wrong zoom silently invalidates the homography and the k/h fits.
 
 **Bench**
-- [ ] Each class at 0.3–1.0 m every 10 cm, centered and to the sides → error versus distance for (a) and (b). Tape from the axle to the obstacle's front face, plus the lateral offset.
-- [ ] Repeat a few points while the robot drives and brakes toward the obstacle: with the lens 5.45 cm above the floor, (b) shifts ~1.6 cm per 0.1° of pitch at 0.7 m (Z²/h), which the static bench does not show.
+- [ ] Each class at 0.3–1.0 m every 10 cm, centered and to each side, 20 detections per position (mean and standard deviation) → error versus distance for (a) and (b). Tape from the axle to the obstacle's front face, plus the lateral offset.
+- [ ] 5 approaches per class while the robot drives and brakes toward the obstacle: with the lens 5.45 cm above the floor, (b) shifts ~1.6 cm per 0.1° of pitch at 0.7 m (Z²/h), which the static bench does not show.
 - [ ] Choose (a), (b) or a distance-weighted blend; confirm d_max.
 - [ ] Set the association radius from the error curve (about 2–3σ at d_max) instead of the initial ~20 cm.
 

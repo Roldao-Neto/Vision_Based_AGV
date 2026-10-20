@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include "../encoder_guard/encoder_guard.h"
+#include "../heading_pi/heading_pi.h"
+#include "../odometry/odometry.h"
 #include "../wheel_pi/wheel_pi.h"
 
 namespace config
@@ -38,7 +40,14 @@ namespace config
 
     constexpr float kCountsPerRev = 1319.75f; // mean of 3 count-mode runs of 10 turns samples
     constexpr float kWheelDiameterM = 0.0675f;
-    constexpr float kCountsPerM = kCountsPerRev / (3.14159265f * kWheelDiameterM);
+
+    // Odometry: m per count per wheel and track b, nominal until the Day 2 bench calibration
+    constexpr double kMetersPerCountNominal = 3.14159265358979 * (double)kWheelDiameterM / (double)kCountsPerRev;
+    constexpr double kTrackM = 0.217;
+    constexpr odometry::Config kOdometry = {
+        {kMetersPerCountNominal, kMetersPerCountNominal},
+        kTrackM
+    };
 
     // Control tick
     constexpr uint32_t kTickPeriodUs = 20000;
@@ -51,6 +60,7 @@ namespace config
     constexpr float kSpeedMaxDuty = 0.5f;     // closed-loop duty limit
     constexpr float kSpeedMinMps = 0.005f;    // below it the w coasts ("a few mm/s")
     constexpr float kStopDecelMps2 = 0.5f;    // every planned stop
+    constexpr float kAccelMps2 = 0.5f;        // speed ramps of umbmark
 
     // K in counts/s per unit duty, tau in s, pwm0 = start of sustained motion on the ramp.
     constexpr wheel_pi::Model kLeftFwd = {7160.4f, 0.15362f, 0.074f};
@@ -58,6 +68,34 @@ namespace config
     constexpr wheel_pi::Model kRightFwd = {7271.4f, 0.10906f, 0.069f};
     constexpr wheel_pi::Model kRightBwd = {7509.1f, 0.14285f, 0.072f};
 
-    constexpr wheel_pi::Config kLeftPi = {kLeftFwd, kLeftBwd, kSpeedTcl, kSpeedMaxDuty, kSpeedMinMps * kCountsPerM};
-    constexpr wheel_pi::Config kRightPi = {kRightFwd, kRightBwd, kSpeedTcl, kSpeedMaxDuty, kSpeedMinMps * kCountsPerM};
+    // v_min in counts/s with each wheel's own m/count
+    constexpr wheel_pi::Config kLeftPi = {
+        kLeftFwd,
+        kLeftBwd,
+        kSpeedTcl,
+        kSpeedMaxDuty,
+        (float)((double)kSpeedMinMps / kOdometry.m_per_count[kLeft])
+    };
+
+    constexpr wheel_pi::Config kRightPi = {
+        kRightFwd,
+        kRightBwd,
+        kSpeedTcl, 
+        kSpeedMaxDuty,
+        (float)((double)kSpeedMinMps / kOdometry.m_per_count[kRight])
+    };
+
+    // Heading PI for driving straight (Day 2, docs/logs/day2-firmware.md, item 2): Kp 1/s, Ti s,
+    // Kd 0, steering limit rad/s
+    constexpr heading_pi::Config kHeadingPi = {2.3f, 1.0f, 0.5f};
+
+    // Ends of the moving modes
+    constexpr float kSteerStopM = 0.015f;              // below it, steering holds and v only ramps down
+    constexpr float kHeadingStopRad = 0.05235988f;     // 3°, the same for the rotations
+    constexpr uint32_t kStoppedTicks = 2;              // ticks without a count on either wheel = stopped
+    constexpr float kLegOvershootM = 0.1f;             // past a leg's end by this much: ramped stop
+
+    // In-place turns: up to 90°/s at α = 2a/b, so each wheel also accelerates and brakes at a
+    constexpr float kTurnMaxRadS = 1.5707963f;
+    constexpr float kTurnAccelRadS2 = (float)(2.0 * (double)kStopDecelMps2 / kTrackM);
 }

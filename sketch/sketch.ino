@@ -5,6 +5,7 @@
 #include "src/encoders/encoders.h"
 #include "src/handlers/handlers.h"
 #include "src/modes/modes.h"
+#include "src/pose/pose.h"
 #include "src/samples/samples.h"
 #include "src/motor_driver/motor_driver.h"
 #include "src/tick_timing/tick_timing.h"
@@ -18,6 +19,7 @@ static void tick(uint32_t now_us)
     tick_count++;
 
     wheel_speed::update();
+    pose::update();
 
     if (wheel_speed::dt_us() != 0)
     {
@@ -34,6 +36,7 @@ static void tick(uint32_t now_us)
         bridge_stack::report_emergency_once(now_ms);
         const tick_timing::Window w = tick_timing::take_window();
         const uint32_t hb_ms = handlers::last_hb_ms();
+        const odometry::State &p = pose::get();
         Bridge.notify(
             "status",
             now_ms,
@@ -56,7 +59,10 @@ static void tick(uint32_t now_us)
             (int32_t)lroundf(wheel_speed::speed(kLeft)),
             (int32_t)lroundf(wheel_speed::speed(kRight)),
             w.dt_min_us,
-            w.dt_max_us
+            w.dt_max_us,
+            (int32_t)lround(p.x * 1000.0),
+            (int32_t)lround(p.y * 1000.0),
+            (int32_t)lround(p.theta * 1000.0)
         );
     }
     tick_timing::tick_ended(now_us);
@@ -64,7 +70,7 @@ static void tick(uint32_t now_us)
 
 void setup()
 {
-    motor_driver::begin(); // the result goes out in status (pwm_hz, pwm_err)
+    motor_driver::begin();
     encoders::begin();
     commands::begin();
 

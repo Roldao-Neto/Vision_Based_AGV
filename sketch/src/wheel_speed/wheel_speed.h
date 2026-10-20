@@ -17,4 +17,8 @@ namespace wheel_speed
     
     // Time between the last two samples, µs (0 before the second update).
     uint32_t dt_us();
+    
+    // Encoder count read by the last update: the tick's snapshot, shared by the odometry and
+    // the recorded samples so both see the same counts.
+    int32_t count(Wheel wheel);
 }

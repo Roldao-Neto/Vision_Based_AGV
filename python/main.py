@@ -8,8 +8,8 @@ from telemetry import (
     events_log,
     on_emergency,
     on_hook,
-    on_speed_end,
-    on_speed_samples,
+    on_run_end,
+    on_run_samples,
     on_status,
     status_log,
 )
@@ -17,8 +17,8 @@ from telemetry import (
 Bridge.provide("status", on_status)
 Bridge.provide("hook", on_hook)
 Bridge.provide("emergency", on_emergency)
-Bridge.provide("speed_end", on_speed_end)
-Bridge.provide("speed_samples", on_speed_samples)
+Bridge.provide("run_end", on_run_end)
+Bridge.provide("run_samples", on_run_samples)
 event("start", f"status={status_log.path.name} events={events_log.path.name}")
 
 threading.Thread(target=mission, name="mission", daemon=True).start()

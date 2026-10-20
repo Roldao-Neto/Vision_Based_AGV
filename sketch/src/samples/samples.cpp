@@ -4,7 +4,7 @@
 
 namespace samples
 {   
-    constexpr uint32_t kCapacity = 520 * 3; // 260 samples of a speed run (6 values)
+    constexpr uint32_t kCapacity = 1600 * 8; // 32 s of a calibration run (8 values per tick)
     constexpr uint32_t kTicksPerNotification = 2;
     
     static int32_t buffer[kCapacity];
