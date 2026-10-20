@@ -27,7 +27,7 @@ static float run_to(float target, float *peak)
         CHECK(s.speed >= 0.0f && s.speed <= kVmax + 1e-6f);
         // The braking curve is sampled at the start of each tick while the robot keeps moving
         // during it, so near the target it brakes up to ~8 % harder than a (0.54 m/s² in the
-        // last 2 cm) and stops ~3 mm late; CLAUDE.md, Motion keeps that law.
+        // last 2 cm) and stops ~3 mm late
         CHECK(std::fabs(s.speed - v) <= 1.1f * kA * kDt);
         p += 0.5f * (v + s.speed) * kDt;
         v = s.speed;
