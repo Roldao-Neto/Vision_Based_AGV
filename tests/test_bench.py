@@ -1,30 +1,40 @@
 import math
 
 import pytest
-from bench import Pose, pose_from_corners, pose_from_reference, run_error, umbmark, wrap
+from bench import Pose, pose_from_reference, pose_from_tapes, run_error, umbmark, wrap
 
-HALF_WIDTH = 0.11  # any value: only the midpoint and the direction of the rear edge matter
+REAR_TO_FRONT = 0.24  # any value: the heading only depends on the rise over it
+CROSS = (1.540, 0.745)
 
 
-def corners_of(p: Pose) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Rear corners of a robot whose axle is at p (the inverse of pose_from_corners)."""
+def tapes_of(p: Pose) -> tuple[float, float, float]:
+    """(dx, dy, dy_front) of a robot whose axle is at p (the inverse of pose_from_tapes)."""
     c, s = math.cos(p.theta), math.sin(p.theta)
-    mx, my = p.x - 0.040 * c, p.y - 0.040 * s
-    return (mx - HALF_WIDTH * s, my + HALF_WIDTH * c), (mx + HALF_WIDTH * s, my - HALF_WIDTH * c)
+    rx, ry = p.x - 0.04075 * c, p.y - 0.04075 * s
+    return rx - CROSS[0], ry - CROSS[1], ry + REAR_TO_FRONT * s - CROSS[1]
 
 
-def test_corners_of_a_robot_facing_x():
-    p = pose_from_corners((0.097, 0.855), (0.097, 0.635))
-    assert math.isclose(p.x, 0.137, abs_tol=1e-12) and math.isclose(p.y, 0.745, abs_tol=1e-12)
-    assert p.theta == 0.0
+def test_robot_on_the_cross_facing_x():
+    p = pose_from_tapes(CROSS, 0.0, 0.0, 0.0, REAR_TO_FRONT)
+    assert math.isclose(p.x, 1.58075, abs_tol=1e-12) and p.y == 0.745 and p.theta == 0.0
 
 
-@pytest.mark.parametrize("theta", [0.3, math.pi / 2, 2.5, -math.pi / 2, -0.01])
-def test_corners_round_trip(theta: float):
-    p = Pose(0.8, 0.6, theta)
-    q = pose_from_corners(*corners_of(p))
+def test_front_point_to_the_left_turns_ccw():
+    p = pose_from_tapes(CROSS, -0.028, 0.002, 0.003, REAR_TO_FRONT)
+    assert math.isclose(p.theta, math.asin(0.001 / REAR_TO_FRONT), abs_tol=1e-15) and p.theta > 0
+
+
+@pytest.mark.parametrize("theta", [0.0, 0.004, -0.05, 0.3, -1.0])
+def test_tapes_round_trip(theta: float):
+    p = Pose(1.55, 0.76, theta)
+    q = pose_from_tapes(CROSS, *tapes_of(p), REAR_TO_FRONT)
     assert math.isclose(q.x, p.x, abs_tol=1e-12) and math.isclose(q.y, p.y, abs_tol=1e-12)
-    assert math.isclose(wrap(q.theta - p.theta), 0.0, abs_tol=1e-12)
+    assert math.isclose(q.theta, p.theta, abs_tol=1e-12)
+
+
+def test_impossible_rise_is_refused():
+    with pytest.raises(ValueError):
+        pose_from_tapes(CROSS, 0.0, 0.0, 0.25, REAR_TO_FRONT)
 
 
 def test_reference_point_is_40_75_mm_behind_the_axle():

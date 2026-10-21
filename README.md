@@ -88,12 +88,14 @@ Odometry uses one distance per encoder count for each wheel and the track b (`kO
 |---|---|---|
 | Encoder counts per wheel revolution | 3 runs of 10 turns by hand (Day 1, `count` mode) | 1319.7 (left), 1319.8 (right), ±0.5; 1319.75 used for both |
 | Nominal distance per count | π · 67.5 mm / 1319.75 | 0.16068 mm |
-| Scale Es (mean distance per count) | 5 straight runs of 1403 mm, A→B, real distance (tape) ÷ odometry distance | pending (Day 2 bench, S1) |
-| Wheel ratio Ed, track error Eb | UMBmark (Borenstein and Feng 1996): 5 CW + 5 CCW 1 m squares, real − odometry end position, the paper's Eqs. 4.20–4.27 | pending (Day 2 bench, U1) |
-| Distance per count, left / right | Es-corrected mean × c_L / c_R = 2/(Ed + 1), 2/(1/Ed + 1) | pending |
-| Track b | 0.217 m × Eb | pending |
+| Scale Es (mean distance per count) | 5 straight runs of 1403 mm, A→B, real distance (tape) ÷ odometry distance | 0.98103 → 0.157632 mm per count |
+| Wheel ratio Ed, track error Eb | UMBmark (Borenstein and Feng 1996): 5 CW + 5 CCW 1 m squares, real − odometry end position, the paper's Eqs. 4.20–4.27 | Ed = 1.00176, Eb = 0.99575 |
+| Distance per count, left / right | Es-corrected mean × c_L / c_R = 2/(Ed + 1), 2/(1/Ed + 1) | 0.157493 mm / 0.157771 mm |
+| Track b | 0.217 m × Eb | 216.08 mm |
 
-Every real pose is measured by taping both rear corners of the robot from the walls. The analysis is `analysis/day2_bench.py` (method and data format in `docs/logs/day2-bench.md`).
+Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm (below 3·SEM, so a second correction would not help); straight A→B, error along the line −26.7 ± 2.2 → 0.5 ± 0.4 mm and to the side +16.1 ± 3.0 → +4.3 ± 4.7 mm.
+
+Every real pose is measured from a tape cross on the floor: the robot's reference point along and across the line, and a front point on its centreline across the line, which gives the heading. The analysis is `analysis/day2_bench.py` (method and data format in `docs/logs/day2-bench.md`).
 
 ## Running a mission
 

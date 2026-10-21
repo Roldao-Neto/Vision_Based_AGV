@@ -41,11 +41,17 @@ namespace config
     constexpr float kCountsPerRev = 1319.75f; // mean of 3 count-mode runs of 10 turns samples
     constexpr float kWheelDiameterM = 0.0675f;
 
-    // Odometry: m per count per wheel and track b, nominal until the Day 2 bench calibration
+    // Odometry: m per count per wheel and track b, calibrated on the Day 2 bench (docs/logs/day2-bench.md)
     constexpr double kMetersPerCountNominal = 3.14159265358979 * (double)kWheelDiameterM / (double)kCountsPerRev;
-    constexpr double kTrackM = 0.217;
+    constexpr double kScaleEs = 0.98103; // S1: mean real / mean odometry distance of 5 straight runs
+    constexpr double kMetersPerCount = kMetersPerCountNominal * kScaleEs;
+    // U1 (UMBmark, 5 CW + 5 CCW): Ed = 1.00176 sets c_L, c_R (their mean stays 1), Eb = 0.99575
+    constexpr double kCorrLeft = 0.99912;
+    constexpr double kCorrRight = 1.00088;
+    constexpr double kTrackEb = 0.99575;
+    constexpr double kTrackM = 0.217 * kTrackEb;
     constexpr odometry::Config kOdometry = {
-        {kMetersPerCountNominal, kMetersPerCountNominal},
+        {kMetersPerCount * kCorrLeft, kMetersPerCount * kCorrRight},
         kTrackM
     };
 
