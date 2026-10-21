@@ -1,5 +1,7 @@
 # Dia 2 — Firmware
 
+> **Arquivo:** o código, os dados e os gráficos deste dia estão no branch `day2` (tag `day2-final`), com os dados em `results/day2/`. No `main`, parte do código citado aqui foi removida depois do Dia 2, e `data/day2/` não é versionado.
+
 ## 0. Ponto de partida: limpeza do `main` depois do Dia 1
 
 O Dia 1 foi arquivado no branch `day1` (tag `day1-final`, com os dados em `results/day1/`), e o `main` ficou só com o que o Dia 2 usa.

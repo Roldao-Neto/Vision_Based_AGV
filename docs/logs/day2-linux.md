@@ -1,5 +1,7 @@
 # Dia 2 — Linux/PC: odometria de referência em Python
 
+> **Arquivo:** o código, os dados e os gráficos deste dia estão no branch `day2` (tag `day2-final`), com os dados em `results/day2/`. No `main`, parte do código citado aqui foi removida depois do Dia 2, e `data/day2/` não é versionado.
+
 ## 1. Referência da odometria e comparação com o firmware
 
 ### O que foi feito e por quê

@@ -179,7 +179,7 @@ The repository is a cleaned scaffold. The raw code from the earlier App Lab expe
   - stops the app first, so no file is copied while it is still being written (`--remove-source-files` would delete a half-copied file and the rest of that run would be lost), and leaves it stopped; the next `deploy.sh` starts it;
   - `app stop` also resets the STM32 (arduino-app-cli `stopAppWithCmd`): the motors are no longer driven (IN1 = IN2 = PWM = L, see Pin map) and the sketch restarts idle, but a run in progress and any data still in the STM32's RAM are lost, so pull only between runs;
   - copies the files in `/app/logs/` there with `--ignore-existing`, so a file already in `data/<day>/` is never overwritten, and only then deletes them on the board (`rsync --remove-source-files`), so the board's storage does not fill up. A file skipped by `--ignore-existing` is not deleted (checked with rsync 3.5.1), so it stays on the board and `pull` lists whatever is left in `logs/` at the end.
-- The PC-only analysis scripts live in `analysis/` (Day 1's are in branch `day1`), read `data/<day>/` and write plots to `data/<day>/plots/`. Day 2: `odometry.py` (the firmware's odometry in Python) and `day2_odometry_check.py` (every recorded run against it, with a per-phase table for `umbmark`), `day2_heading.py` (heading PI gains), `bench.py` and `day2_bench.py` (real pose from the reference and front points measured from the tape crosses, real − odometry errors, Es, UMBmark and the Ed/Eb corrections; tape values in `data/day2/bench_<step>.csv`, format in `docs/logs/day2-bench.md`).
+- The PC-only analysis scripts live in `analysis/` (Day 1's are in branch `day1`, Day 2's heading-gain design and calibration report in branch `day2`), read `data/<day>/` and write plots to `data/<day>/plots/`. What remains: `odometry.py` (the firmware's odometry in Python) and `day2_odometry_check.py` (every recorded run against it, with a per-phase table for `umbmark`), and `bench.py` (`pose_from_tapes`: the real pose from the reference and front points measured from a tape cross, and `run_error`: real − odometry in the run's start frame; the measuring method is in `docs/logs/day2-bench.md`, item 1), which Days 3 and 7 use for the real pose at B.
 - `rsync -a` keeps the executable bit that the `.eim` needs: the Edge Impulse runner refuses a model that is not executable, so `chmod +x` it after downloading.
 - Do not use Zed remote-SSH: its `~/.zed_server` filled the board's storage. Do not use ADB either, because the board is mounted in the robot.
 - Board-side commands (from `docs/logs/`):
@@ -193,7 +193,7 @@ The repository is a cleaned scaffold. The raw code from the earlier App Lab expe
   ```
 
 - **`docs/board-versions.txt`:** the board's software versions recorded on Day 1 (arduino-app-cli 0.13.0, arduino-router 0.10.0, `arduino:zephyr` 1.0.0, container image `python-apps-base:0.12.0` with `arduino_app_bricks` 0.12.0) and, at the end, the "Board platform: …" and "Used library …" lines that `deploy.sh` compares on every deploy.
-- Planned but **not created yet**: pytest suites for grid, planner, simplification, association and homography (Day 4). Odometry and the bench formulas are tested in `tests/test_odometry.py` and `tests/test_bench.py`.
+- Planned but **not created yet**: pytest suites for grid, planner, simplification, association and homography (Day 4). Odometry and the real-pose formulas are tested in `tests/test_odometry.py` and `tests/test_bench.py`.
 
 ## Local Python environment (PC only)
 

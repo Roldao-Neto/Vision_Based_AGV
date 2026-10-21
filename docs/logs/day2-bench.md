@@ -1,5 +1,7 @@
 # Dia 2 — Bancada: calibração da odometria
 
+> **Arquivo:** o código, os dados e os gráficos deste dia estão no branch `day2` (tag `day2-final`), com os dados em `results/day2/`. No `main`, parte do código citado aqui foi removida depois do Dia 2, e `data/day2/` não é versionado.
+
 ## 0. Preparação: análise da bancada antes das medidas
 
 ### O que foi feito e por quê

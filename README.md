@@ -95,7 +95,7 @@ Odometry uses one distance per encoder count for each wheel and the track b (`kO
 
 Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm (below 3·SEM, so a second correction would not help); straight A→B, error along the line −26.7 ± 2.2 → 0.5 ± 0.4 mm and to the side +16.1 ± 3.0 → +4.3 ± 4.7 mm.
 
-Every real pose is measured from a tape cross on the floor: the robot's reference point along and across the line, and a front point on its centreline across the line, which gives the heading. The analysis is `analysis/day2_bench.py` (method and data format in `docs/logs/day2-bench.md`).
+Every real pose is measured from a tape cross on the floor: the robot's reference point along and across the line, and a front point on its centreline across the line, which gives the heading. The calibration analysis (`analysis/day2_bench.py`, with the data in `results/day2/`) is archived in branch `day2`, tag `day2-final`; the method and data format are in `docs/logs/day2-bench.md`.
 
 ## Running a mission
 
