@@ -21,7 +21,7 @@ item 0) and a constant 2 mm/s tracking offset on the right wheel (the integral m
 It drives a 1.38 m straight (the A→B line) at 0.25 m/s with the firmware's profile, computes
 the heading from integer encoder counts like the firmware, and prints, per gain pair, the
 lateral offset at the end, the largest heading error after the disturbance and the largest
-steering ω. Writes data/day2/plots/heading_gains.csv and day2_heading_sim.png.
+steering ω. Writes results/day2/plots/heading_gains.csv and day2_heading_sim.png.
 
     uv run python analysis/day2_heading.py
 """
@@ -35,7 +35,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-PLOTS = Path(__file__).resolve().parent.parent / "data" / "day2" / "plots"
+PLOTS = Path(__file__).resolve().parent.parent / "results" / "day2" / "plots"
 
 DT = 0.02
 T_CL = 0.1  # s, closed wheel loops (Day 1 design)

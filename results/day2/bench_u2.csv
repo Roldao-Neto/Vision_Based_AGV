@@ -1,0 +1,11 @@
+run,session,record_id,start_dx,start_dy,start_dyf,end_dx,end_dy,end_dyf,notes
+cw1,20261021-163750,3,0,0,0,0,-5,-4,y signs flipped from the tape reading (Rolds took + towards the A-B line at Q4)
+cw2,20261021-163750,4,0,0,0,10,5,5,y signs flipped from the tape reading
+cw3,20261021-163750,5,0,0,0,0,-5,-5,y signs flipped from the tape reading
+cw4,20261021-163750,6,0,0,0,-5,-3,-3,y signs flipped from the tape reading
+cw5,20261021-163750,7,0,0,0,0,-6,-5,y signs flipped from the tape reading
+ccw1,20261021-163750,8,0,0,0,21,5,5,
+ccw2,20261021-163750,9,0,0,0,10,-2,-2,
+ccw3,20261021-163750,10,0,0,0,10,5,0,
+ccw4,20261021-163750,11,0,0,0,0,0,0,
+ccw5,20261021-163750,12,0,0,0,1,5,0,

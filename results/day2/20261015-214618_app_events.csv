@@ -1,0 +1,22 @@
+rx_monotonic,event,detail
+11980.133997283,start,status=20261015-214618_app_status.csv events=20261015-214618_app_events.csv
+11980.145060293,mcu_ready,attempts=1 after=0.0s last_error=None
+11984.363169159,cmd_rejected,speed 250 500 1500 450
+11986.778693831,cmd,"umbmark 2 1000 250 30000 -> mode(6, 2, 1000, 250, 30000) ack=False"
+11988.994534996,cmd,"umbmark 1 1000 250 30001 -> mode(6, 1, 1000, 250, 30001) ack=False"
+11990.809499284,cmd,"umbmark -1 1001 250 30000 -> mode(6, -1, 1001, 250, 30000) ack=False"
+11992.824977936,cmd,"umbmark 1 1000 40 30000 -> mode(6, 1, 1000, 40, 30000) ack=False"
+11994.439365017,cmd,"straight 250 500 8000 1601 -> mode(5, 250, 500, 8000, 1601) ack=False"
+12032.194931453,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12055.543845605,umbmark_end,record_id=1 duration_ms=23301 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=20569 counts_r=29041 errors_l=0 errors_r=0 samples=1166 x0_um=-803 y0_um=2 th0_urad=1481 x_um=816 y_um=3959 th_urad=6274668 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+12064.930823697,run_samples,record_id=1 samples=1166 file=20261015-214743_umbmark_1_ccw_L1000.csv
+12078.991531213,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+12102.346312213,umbmark_end,record_id=2 duration_ms=23301 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29076 counts_r=20605 errors_l=0 errors_r=0 samples=1166 x0_um=896 y0_um=3958 th0_urad=6273927 x_um=2141 y_um=2691 th_urad=1481 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+12111.733027272,run_samples,record_id=2 samples=1166 file=20261015-214830_umbmark_2_cw_L1000.csv
+12131.013156862,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12135.839601931,cmd,"idle -> mode(0, 0, 0, 0, 0) ack=True"
+12136.17630455,umbmark_end,record_id=3 duration_ms=5140 reason=command p1=1 p2=1000 p3=250 p4=30000 counts_l=5854 counts_r=6570 errors_l=0 errors_r=0 samples=258 x0_um=2221 y0_um=2691 th0_urad=2221 x_um=1000411 y_um=4867 th_urad=532392 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+12138.226009084,run_samples,record_id=3 samples=258 file=20261015-214856_umbmark_3_ccw_L1000.csv
+12165.16088335,cmd,"umbmark -1 1000 250 5000 -> mode(6, -1, 1000, 250, 5000) ack=True"
+12170.52820965,umbmark_end,record_id=4 duration_ms=5341 reason=time p1=-1 p2=1000 p3=250 p4=5000 counts_l=6789 counts_r=5634 errors_l=0 errors_r=0 samples=268 x0_um=1000411 y0_um=4867 th0_urad=532392 x_um=1860241 y_um=511902 th_urad=-322841 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+12172.658582177,run_samples,record_id=4 samples=268 file=20261015-214930_umbmark_4_cw_L1000.csv

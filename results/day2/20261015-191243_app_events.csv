@@ -1,0 +1,3 @@
+rx_monotonic,event,detail
+2765.055687646,start,status=20261015-191243_app_status.csv events=20261015-191243_app_events.csv
+2765.063788478,mcu_ready,attempts=1 after=0.0s last_error=None

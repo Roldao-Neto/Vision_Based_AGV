@@ -1,0 +1,6 @@
+run,mode,p1,p2,p3,p4,reason,start_taped,real_along_mm,real_left_mm,real_dtheta_mrad,odo_along_mm,odo_left_mm,odo_dtheta_mrad,ex_mm,ey_mm,etheta_mrad,notes
+1,straight,250,500,8000,1403,target,True,1403.0,10.0,0.0,1401.8,0.3,7.0,1.2,9.7,-7.0,dx not given (reached B)
+2,straight,250,500,8000,1403,target,True,1403.0,0.0,0.0,1402.4,0.2,7.0,0.6,-0.2,-7.0,perfect run (Rolds)
+3,straight,250,500,8000,1403,target,True,1403.0,0.0,0.0,1402.4,0.3,7.0,0.6,-0.3,-7.0,perfect run (Rolds)
+4,straight,250,500,8000,1403,target,True,1403.0,9.0,0.0,1402.9,0.3,7.0,0.1,8.7,-7.0,dx not given (reached B)
+5,straight,250,500,8000,1403,target,True,1403.0,4.0,0.0,1402.8,0.4,8.5,0.2,3.6,-8.5,dx not given (reached B)

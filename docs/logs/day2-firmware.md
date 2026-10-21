@@ -29,7 +29,7 @@ Decisões:
 
 ### Resultados na placa
 
-Dados: `data/day2/20261015-191705_app_{events,status,hook}.csv` (628 s), `20261015-192703_speed.csv` e `20261015-192704_speed_1_v250_a500.csv`.
+Dados: `results/day2/20261015-191705_app_{events,status,hook}.csv` (628 s), `20261015-192703_speed.csv` e `20261015-192704_speed_1_v250_a500.csv`.
 
 - Para ver a pose ao vivo pelo ssh:
 
@@ -81,7 +81,7 @@ A segunda versão usava malhas das rodas com atrasos diferentes (0,13 e 0,08 s) 
 
 Modelo final (`analysis/day2_heading.py`): o perfil passa pelo feedforward, com erro de ±1 % em cada roda durante as rampas; só a correção de rumo e as perturbações passam pela malha de 0,1 s. Perturbações: queda de 40 mm/s na roda esquerda por 0,3 s no começo (como a execução 1 do item 0) e erro constante de 2 mm/s na direita. Rumo medido por contagens inteiras, como no firmware.
 
-`uv run python analysis/day2_heading.py` → `data/day2/plots/heading_gains.csv`, `day2_heading_sim.png`:
+`uv run python analysis/day2_heading.py` → `results/day2/plots/heading_gains.csv`, `day2_heading_sim.png`:
 
 | Kp (1/s) | Ti (s) | lateral no fim (mm) | maior \|rumo\| depois de 1,5 s (mrad) | maior \|ω\| (rad/s) |
 |---|---|---|---|---|
@@ -110,7 +110,7 @@ Modelo final (`analysis/day2_heading.py`): o perfil passa pelo feedforward, com 
 
 ### Resultados na placa, rodas fora do chão
 
-Dados: `data/day2/20261015-194151_app_{events,status,hook}.csv`, `20261015-194523_speed*.csv`, `20261015-194536_straight.csv` (resumos) e `20261015-1945*_straight_<id>_v<v>_d<d>.csv` (amostras). Robô levantado, LiPo ligada, chave à mão.
+Dados: `results/day2/20261015-194151_app_{events,status,hook}.csv`, `20261015-194523_speed*.csv`, `20261015-194536_straight.csv` (resumos) e `20261015-1945*_straight_<id>_v<v>_d<d>.csv` (amostras). Robô levantado, LiPo ligada, chave à mão.
 
 | # | Comando | Fim | Duração | Contagens esq. / dir. | Amostras | Pela odometria |
 |---|---|---|---|---|---|---|
@@ -126,7 +126,7 @@ A comparação com a referência em Python está em `docs/logs/day2-linux.md`: a
 
 ### Resultados no chão
 
-Dados: `data/day2/20261015-194856_app_{events,status,hook}.csv`, `20261015-194954_straight.csv` e `20261015-195*_straight_<id>_v<±250>_d1380.csv`; comparação e gráfico: `data/day2/plots/odometry_check_20261015-194856.csv`, `day2_odometry_20261015-194856.png`. Sobre a linha A→B, ida e volta alternadas: `straight 250 500 8000 1380` e `straight -250 500 8000 1380`, cinco execuções.
+Dados: `results/day2/20261015-194856_app_{events,status,hook}.csv`, `20261015-194953_straight.csv` e `20261015-195*_straight_<id>_v<±250>_d1380.csv`; comparação e gráfico: `results/day2/plots/odometry_check_20261015-194856.csv`, `day2_odometry_20261015-194856.png`. Sobre a linha A→B, ida e volta alternadas: `straight 250 500 8000 1380` e `straight -250 500 8000 1380`, cinco execuções.
 
 | # | Sentido | Fim | Duração | Contagens esq. / dir. | θ no início (mrad) | θ no fim |
 |---|---|---|---|---|---|---|
@@ -149,7 +149,7 @@ Dados: `data/day2/20261015-194856_app_{events,status,hook}.csv`, `20261015-19495
 
 ### A e B medidos de novo, encosto na parede
 
-Dados: `data/day2/20261015-200927_app_{events,status,hook}.csv`, `20261015-200953_straight.csv` e `20261015-20*_straight_<id>_*.csv` (11 execuções; todas batem com a referência em Python, `plots/odometry_check_20261015-200927.csv`).
+Dados: `results/day2/20261015-200927_app_{events,status,hook}.csv`, `20261015-200953_straight.csv` e `20261015-20*_straight_<id>_*.csv` (11 execuções; todas batem com a referência em Python, `plots/odometry_check_20261015-200927.csv`).
 
 **A e B.** As posições de A e B do `CLAUDE.md` vinham de uma medida errada. Mediu-se de novo usando um único ponto do robô, 7 mm atrás da traseira das rodas (40,75 mm atrás do eixo): A_ref = (137, 745) mm e B_ref = (1540, 745) mm, θ0 = 0 (de frente para B). A distância é 1403 mm. Pela geometria, o centro fica 110,75 mm à frente desse ponto: A = (248, 745) e B = (1651, 745) mm. Mediu-se o centro direto em ~(260, 745) e ~(1650, 745); o de B bate com a geometria e o de A não (12 mm), então vale a geometria. y saiu ~750 mm nesta medida e continua 745. 
 
@@ -174,7 +174,7 @@ O ROADMAP pede o giro no lugar sobre o perfil angular (usado pelo `umbmark` e, n
 
 ### Resultados na placa, rodas fora do chão
 
-Dados: `data/day2/20261015-214618_app_{events,status,hook}.csv`, `20261015-214733_umbmark.csv` (resumos) e `20261015-2148*`/`2149*_umbmark_<id>_<ccw/cw>_L1000.csv` (amostras). Robô levantado, LiPo ligada, chave à mão (regra do Dia 1 para código de motor novo).
+Dados: `results/day2/20261015-214618_app_{events,status,hook}.csv`, `20261015-214733_umbmark.csv` (resumos) e `20261015-2148*`/`2149*_umbmark_<id>_<ccw/cw>_L1000.csv` (amostras). Robô levantado, LiPo ligada, chave à mão (regra do Dia 1 para código de motor novo).
 
 - Deploy: o mesmo tamanho do PC (139 296 / 109 700 B), `Arduino_RouterBridge` da cópia corrigida.
 - Comandos que precisam ser recusados, nenhum moveu as rodas:
@@ -197,7 +197,7 @@ Dados: `data/day2/20261015-214618_app_{events,status,hook}.csv`, `20261015-21473
 | 3 | `umbmark 1 1000 250 30000` + `idle` em ~4,9 s | comando | 5140 ms | 258 | parou no meio do primeiro giro (30°), 0,34 s depois do `idle` |
 | 4 | `umbmark -1 1000 250 5000` | tempo | 5341 ms | 268 | parou no meio do primeiro giro (49°), 0,34 s depois dos 5 s |
 
-As quatro batem com a referência em Python (`docs/logs/day2-linux.md`, item 2). Por fase, pela tabela nova do `day2_odometry_check.py` (`uv run python analysis/day2_odometry_check.py data/day2/20261015-214618_app_events.csv`):
+As quatro batem com a referência em Python (`docs/logs/day2-linux.md`, item 2). Por fase, pela tabela nova do `day2_odometry_check.py` (`uv run python analysis/day2_odometry_check.py results/day2/20261015-214618_app_events.csv`):
 
 | | Execução 1 (CCW) | Execução 2 (CW) |
 |---|---|---|

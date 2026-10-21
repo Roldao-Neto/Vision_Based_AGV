@@ -1,0 +1,45 @@
+rx_monotonic,event,detail
+4150.836311567,start,status=20261021-133915_app_status.csv events=20261021-133915_app_events.csv
+4150.843707391,mcu_ready,attempts=1 after=0.0s last_error=None
+11000.270760145,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+11000.532114523,umbmark_end,record_id=1 duration_ms=239 reason=encoder p1=1 p2=1000 p3=250 p4=30000 counts_l=0 counts_r=0 errors_l=0 errors_r=0 samples=13 x0_um=92228 y0_um=3065 th0_urad=-87896 x_um=92228 y_um=3065 th_urad=-87896 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+11000.603420546,run_samples,record_id=1 samples=13 file=20261021-153325_umbmark_1_ccw_L1000.csv
+11040.432278742,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+11064.027821156,umbmark_end,record_id=2 duration_ms=23539 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21093 counts_r=29736 errors_l=0 errors_r=0 samples=1178 x0_um=92307 y0_um=3058 th0_urad=-88623 x_um=91239 y_um=2484 th_urad=6189779 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+11073.499099111,run_samples,record_id=2 samples=1178 file=20261021-153438_umbmark_2_ccw_L1000.csv
+11668.257789178,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+11691.804798811,umbmark_end,record_id=3 duration_ms=23501 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21048 counts_r=29671 errors_l=0 errors_r=0 samples=1176 x0_um=58729 y0_um=3159 th0_urad=6287845 x_um=59561 y_um=3052 th_urad=12551717 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+11701.266671568,run_samples,record_id=3 samples=1176 file=20261021-154506_umbmark_3_ccw_L1000.csv
+11970.83057318,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+11994.373484253,umbmark_end,record_id=4 duration_ms=23500 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21063 counts_r=29703 errors_l=0 errors_r=0 samples=1176 x0_um=60979 y0_um=3069 th0_urad=12580774 x_um=61281 y_um=2772 th_urad=18856996 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+12003.836962994,run_samples,record_id=4 samples=1176 file=20261021-155008_umbmark_4_ccw_L1000.csv
+12421.169867091,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12444.677430629,umbmark_end,record_id=5 duration_ms=23459 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21044 counts_r=29690 errors_l=0 errors_r=0 samples=1174 x0_um=59862 y0_um=2745 th0_urad=18823581 x_um=60745 y_um=3477 th_urad=25104161 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+12454.114268959,run_samples,record_id=5 samples=1174 file=20261021-155738_umbmark_5_ccw_L1000.csv
+12591.042474915,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12614.652811895,umbmark_end,record_id=6 duration_ms=23561 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21038 counts_r=29689 errors_l=0 errors_r=0 samples=1179 x0_um=60430 y0_um=3496 th0_urad=25101255 x_um=61618 y_um=3581 th_urad=31385468 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+12624.124027447,run_samples,record_id=6 samples=1179 file=20261021-160028_umbmark_6_ccw_L1000.csv
+12788.400850156,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12811.949412103,umbmark_end,record_id=7 duration_ms=23499 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21045 counts_r=29677 errors_l=0 errors_r=0 samples=1176 x0_um=57286 y0_um=3723 th0_urad=31397817 x_um=57627 y_um=3938 th_urad=37668228 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+12821.412357459,run_samples,record_id=7 samples=1176 file=20261021-160346_umbmark_7_ccw_L1000.csv
+12968.899392927,cmd,"umbmark 1 1000 250 30000 -> mode(6, 1, 1000, 250, 30000) ack=True"
+12992.471888749,umbmark_end,record_id=8 duration_ms=23519 reason=target p1=1 p2=1000 p3=250 p4=30000 counts_l=21044 counts_r=29685 errors_l=0 errors_r=0 samples=1177 x0_um=54239 y0_um=4051 th0_urad=37682029 x_um=55096 y_um=3890 th_urad=43958978 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+13001.93683137,run_samples,record_id=8 samples=1177 file=20261021-160646_umbmark_8_ccw_L1000.csv
+13381.882364802,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+13405.528258324,umbmark_end,record_id=9 duration_ms=23581 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29703 counts_r=21079 errors_l=0 errors_r=0 samples=1180 x0_um=57616 y0_um=3792 th0_urad=43944449 x_um=57620 y_um=3213 th_urad=37679850 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+13414.995213183,run_samples,record_id=9 samples=1180 file=20261021-161339_umbmark_9_cw_L1000.csv
+13708.747692443,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+13732.413987576,umbmark_end,record_id=10 duration_ms=23620 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29691 counts_r=21069 errors_l=0 errors_r=0 samples=1182 x0_um=39656 y0_um=3549 th0_urad=37711812 x_um=39943 y_um=3200 th_urad=31448666 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+13741.928903746,run_samples,record_id=10 samples=1182 file=20261021-161906_umbmark_10_cw_L1000.csv
+13871.190590272,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+13894.699435358,umbmark_end,record_id=11 duration_ms=23459 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29711 counts_r=21087 errors_l=0 errors_r=0 samples=1174 x0_um=38840 y0_um=3216 th0_urad=31406534 x_um=39201 y_um=3208 th_urad=25141935 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+13904.132386805,run_samples,record_id=11 samples=1174 file=20261021-162148_umbmark_11_cw_L1000.csv
+13964.565797344,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+13988.223541301,umbmark_end,record_id=12 duration_ms=23600 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29690 counts_r=21068 errors_l=0 errors_r=0 samples=1181 x0_um=37308 y0_um=3219 th0_urad=25205859 x_um=37904 y_um=2883 th_urad=18942713 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+13997.734403666,run_samples,record_id=12 samples=1181 file=20261021-162322_umbmark_12_cw_L1000.csv
+14144.871408159,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+14168.585214913,umbmark_end,record_id=13 duration_ms=23660 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29714 counts_r=21086 errors_l=0 errors_r=0 samples=1184 x0_um=33700 y0_um=2199 th0_urad=19006637 x_um=33941 y_um=2336 th_urad=12739132 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+14178.094629456,run_samples,record_id=13 samples=1184 file=20261021-162622_umbmark_13_cw_L1000.csv
+14351.475706419,cmd,"umbmark -1 1000 250 30000 -> mode(6, -1, 1000, 250, 30000) ack=True"
+14375.289238836,umbmark_end,record_id=14 duration_ms=23759 reason=target p1=-1 p2=1000 p3=250 p4=30000 counts_l=29702 counts_r=21073 errors_l=0 errors_r=0 samples=1189 x0_um=31993 y0_um=2038 th0_urad=12715161 x_um=31415 y_um=2379 th_urad=6446929 m_per_count_l_pm=157631962 m_per_count_r_pm=157631962 track_nm=217000000
+14384.845645254,run_samples,record_id=14 samples=1189 file=20261021-162949_umbmark_14_cw_L1000.csv

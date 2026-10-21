@@ -9,7 +9,7 @@ double; the only differences are the rounding of the report to µm/µrad and of 
 pm/nm). Also plots the heading, the lateral offset from the start line and the path (in the
 start frame) of each run.
 
-    uv run python analysis/day2_odometry_check.py data/day2/<session>_app_events.csv
+    uv run python analysis/day2_odometry_check.py results/day2/<session>_app_events.csv
 """
 
 import csv

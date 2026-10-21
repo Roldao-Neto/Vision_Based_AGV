@@ -28,7 +28,7 @@ As fórmulas vêm do artigo citado no ROADMAP: Borenstein e Feng, "Measurement a
 
 > Substituído no dia da bancada pela medida a partir das fitas no chão (item 1). O formato abaixo, com os cantos medidos das paredes, ficou só como registro do que foi preparado.
 
-Um arquivo por passo, `data/day2/bench_<passo>.csv` (`s1`, `u1`, `s2`, `u2`), uma linha por execução, tudo em mm, x medido da parede do fundo e y da parede lateral (y = 0):
+Um arquivo por passo, `results/day2/bench_<passo>.csv` (`s1`, `u1`, `s2`, `u2`), uma linha por execução, tudo em mm, x medido da parede do fundo e y da parede lateral (y = 0):
 
 ```csv
 run,session,record_id,start_lx,start_ly,start_rx,start_ry,end_lx,end_ly,end_rx,end_ry,notes
@@ -80,7 +80,7 @@ O script recuperou o Es exato e o Ed e o Eb dentro do que o ruído permite. Os c
   2. Robô na marca (ponto de referência sobre a marca, traseira no esquadro da linha). Nos `straight`, medir também os cantos na partida.
   3. `./deploy.sh run straight 250 500 8000 1403` (S1, S2), ou `run umbmark 1 1000 250 30000` (CCW, marca (459, 250)) e `run umbmark -1 1000 250 30000` (CW, marca (459, 1250)) em U1, U2. Anotar o `record_id` da linha `*_end`.
   4. Medir os cantos onde parou.
-  5. No fim da fase, `./deploy.sh pull day2`, e depois `uv run python analysis/day2_bench.py data/day2`.
+  5. No fim da fase, `./deploy.sh pull day2`, e depois `uv run python analysis/day2_bench.py results/day2`.
   6. Corrigir o `config.h` (`kOdometry`: m/contagem por roda e `kTrackM`), deploy, e o passo seguinte.
 
 ## 1. Medida da pose real: ponto de referência e ponto da frente
@@ -127,23 +127,23 @@ Passos 1 e 2 do ROADMAP: cinco `straight 250 500 8000 1403` de A a B com as cons
 
 Robô no chão da arena, LiPo carregada, `./deploy.sh --no-follow` (sessão `20261021-123458`). Posicionou-se o robô na cruz de A antes de cada execução (partida 0, 0, 0: P na cruz, traseira contra a perpendicular) e mediu `dx`, `dy` e `dyf` no fim, a partir da cruz de B. 
 
-**Decisão:** sem medir L, a distância entre as fitas de A e B, a borda das fitas nem a tensão da bateria, que já tinham sido conferidas antes. L ficou 240 mm pela geometria, em `data/day2/bench_setup.csv`; ele não entra em nenhum resultado do S1, porque em todas as execuções `dyf` = `dy` (rumo real 0, qualquer que seja L).
+**Decisão:** sem medir L, a distância entre as fitas de A e B, a borda das fitas nem a tensão da bateria, que já tinham sido conferidas antes. L ficou 240 mm pela geometria, em `results/day2/bench_setup.csv`; ele não entra em nenhum resultado do S1, porque em todas as execuções `dyf` = `dy` (rumo real 0, qualquer que seja L).
 
 ### Comandos
 
 ```bash
 ./deploy.sh run straight 250 500 8000 1403   # 5 vezes, o robô levado à mão de volta para A
 ./deploy.sh pull day2
-uv run python analysis/day2_bench.py data/day2
-uv run python analysis/day2_odometry_check.py data/day2/20261021-123458_app_events.csv
+uv run python analysis/day2_bench.py results/day2
+uv run python analysis/day2_odometry_check.py results/day2/20261021-123458_app_events.csv
 ```
 
 - O `straight` anda 1403 mm (de A_ref a B_ref) ao longo do rumo de partida, a 250 mm/s com rampas de 0,5 m/s², e termina por alvo; 8 s é o limite de tempo (a execução leva ~6,1 s).
-- O `day2_bench.py` junta cada linha de `data/day2/bench_s1.csv` ao `straight_end` do mesmo `record_id` e calcula o erro real − odometria no referencial da partida (item 0); o `day2_odometry_check.py` refaz a odometria de cada execução a partir das amostras gravadas.
+- O `day2_bench.py` junta cada linha de `results/day2/bench_s1.csv` ao `straight_end` do mesmo `record_id` e calcula o erro real − odometria no referencial da partida (item 0); o `day2_odometry_check.py` refaz a odometria de cada execução a partir das amostras gravadas.
 
 ### Resultados
 
-Medidas (mm): `data/day2/bench_s1.csv`; erros por execução: `data/day2/plots/bench_s1.csv`; gráfico: `data/day2/plots/bench_straight.png`.
+Medidas (mm): `results/day2/bench_s1.csv`; erros por execução: `results/day2/plots/bench_s1.csv`; gráfico: `results/day2/plots/bench_straight.png`.
 
 | Execução | Fim | `dx` / `dy` / `dyf` no fim (mm) | Distância real (mm) | Pela odometria (mm) | εx ao longo (mm) | εy lateral (mm) | εθ (mrad) |
 |---|---|---|---|---|---|---|---|
@@ -161,8 +161,8 @@ Es (mean real / mean odometry distance) = 0.98103; constants used: m/count L 0.1
 
 - **Distância:** o robô anda 1,9 % menos do que a odometria nominal calcula, nas cinco execuções (dp 2,2 mm), como na execução preliminar de 1400 mm do item 3 de `day2-firmware.md` (28,1 mm antes do alvo). O Ø efetivo das rodas é 67,5 × 0,98103 = 66,2 mm.
 - **Lateral:** o robô termina 16 mm à esquerda da linha, com espalhamento de 3 mm, e os encoders veem só 0,1–0,2 mm: é um erro que os encoders não veem, o assunto do UMBmark. O rumo real no fim é 0 em todas (`dyf` = `dy`), enquanto a odometria registra 2–6 mrad à esquerda (os últimos 1,5 cm sem direção, `day2-firmware.md`, item 3), daí εθ negativo. Com uma curvatura constante (uma roda maior), 16 mm de desvio em 1,375 m viria com ~23 mrad de rumo no fim, ou ~5,6 mm entre `dyf` e `dy`, que a fita mostraria; um rumo de partida ~12 mrad à esquerda, mantido, daria ~2,8 mm. As medidas em mm inteiros não mostram nenhum dos dois, então o S1 não separa a origem do desvio lateral; o UMBmark mede o Ed e o Eb diretamente.
-- **Odometria do firmware contra a referência em Python:** as cinco batem, |Δx|, |Δy| ≤ 0,58 µm e |Δθ| ≤ 0,69 µrad (`data/day2/plots/odometry_check_20261021-123458.csv`).
-- **Sessão** (`data/day2/20261021-123458_app_status.csv`, 6011 linhas, 50 min): 0 overrun, 0 emergência, atraso do tick ≤ 1,66 ms, corpo do tick ≤ 0,61 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), `pwm_hz` = 20000, `pwm_err` = 0, 0 erro de encoder, nenhum `hook`.
+- **Odometria do firmware contra a referência em Python:** as cinco batem, |Δx|, |Δy| ≤ 0,58 µm e |Δθ| ≤ 0,69 µrad (`results/day2/plots/odometry_check_20261021-123458.csv`).
+- **Sessão** (`results/day2/20261021-123458_app_status.csv`, 6011 linhas, 50 min): 0 overrun, 0 emergência, atraso do tick ≤ 1,66 ms, corpo do tick ≤ 0,61 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), `pwm_hz` = 20000, `pwm_err` = 0, 0 erro de encoder, nenhum `hook`.
 
 ### Es no firmware
 
@@ -222,13 +222,13 @@ Conferências: todas dentro de ~2 mm: c3 a 322 mm da perpendicular de A sobre a 
 ./deploy.sh run umbmark 1 1000 250 30000    # CCW, de Q1
 ./deploy.sh run umbmark -1 1000 250 30000   # CW, de Q4
 ./deploy.sh pull day2
-uv run python analysis/day2_bench.py data/day2
-uv run python analysis/day2_odometry_check.py data/day2/20261021-133915_app_events.csv
+uv run python analysis/day2_bench.py results/day2
+uv run python analysis/day2_odometry_check.py results/day2/20261021-133915_app_events.csv
 ```
 
 ### Resultados
 
-Medidas: `data/day2/bench_u1.csv`; erros por execução: `data/day2/plots/bench_u1.csv`; gráfico: `data/day2/plots/bench_umbmark.png`. Todas terminaram por alvo, em 23,5–23,8 s.
+Medidas: `results/day2/bench_u1.csv`; erros por execução: `results/day2/plots/bench_u1.csv`; gráfico: `results/day2/plots/bench_umbmark.png`. Todas terminaram por alvo, em 23,5–23,8 s.
 
 | Execução | Record | `dx` / `dy` / `dyf` (mm, arena) | εx (mm) | εy (mm) | εθ (mrad) |
 |---|---|---|---|---|---|
@@ -259,8 +259,8 @@ R = 123.6 m, Ed = 1.00176, Eb = 0.99575, c_L = 0.99912, c_R = 1.00088
 - **Eb = 0,99575:** a bitola efetiva é 216,08 mm, 0,9 mm menor que os 217 nominais. Com a bitola menor, o robô gira mais do que a odometria calcula (α < 0: giros longos).
 - **Regra prática do artigo:** E_max,syst = 41,9 mm é bem maior que 3·SEM (14,8 mm no CCW, 8,3 mm no CW), então a correção vale a pena.
 - **Giros no chão** (tabela por fase do `day2_odometry_check.py`, as 52 rotações das 13 execuções completas): terminam em média 7,9 mrad (0,45°) antes do alvo, de −20,0 a +5,7 mrad. No ar terminavam 9,4–13,1 mrad antes (`day2-firmware.md`, item 4); no chão ficam um pouco mais perto e às vezes passam do alvo. As pernas param 0–1,2 mm antes do canto. Isso é a odometria e não entra na calibração, que compara a pose real com a da odometria.
-- **Odometria contra a referência em Python:** as 14 batem, |Δx|, |Δy| ≤ 0,83 µm e |Δθ| ≤ 0,86 µrad (`data/day2/plots/odometry_check_20261021-133915.csv`).
-- **Sessão** (`data/day2/20261021-133915_app_status.csv`, 20 631 linhas): 0 overrun, 0 emergência, atraso do tick ≤ 1,72 ms, corpo do tick ≤ 0,69 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), 0 erro de encoder, nenhum `hook`.
+- **Odometria contra a referência em Python:** as 14 batem, |Δx|, |Δy| ≤ 0,83 µm e |Δθ| ≤ 0,86 µrad (`results/day2/plots/odometry_check_20261021-133915.csv`).
+- **Sessão** (`results/day2/20261021-133915_app_status.csv`, 20 631 linhas): 0 overrun, 0 emergência, atraso do tick ≤ 1,72 ms, corpo do tick ≤ 0,69 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), 0 erro de encoder, nenhum `hook`.
 
 ### Ed e Eb no firmware
 
@@ -299,7 +299,7 @@ Passo 5 do ROADMAP: o mesmo UMBmark (5 CW + 5 CCW) e os mesmos cinco `straight` 
 
 O U2 veio primeiro (as fitas c1–c4 estavam prontas), começando pelo CW. Antes, `./deploy.sh --no-follow` com o `config.h` do item 3; todas as execuções da sessão `20261021-163750` mandam no `run_end` as constantes novas (`m_per_count_l_pm` = 157 493 246, `m_per_count_r_pm` = 157 770 678, `track_nm` = 216 077 750). O que se esperava: os centros das nuvens perto da origem, com o mesmo espalhamento de antes, porque a correção tira só a parte sistemática.
 
-Medidas: `data/day2/bench_u2.csv` e `data/day2/bench_s2.csv`; erros por execução: `data/day2/plots/bench_u2.csv`, `bench_s2.csv`; gráficos: `data/day2/plots/bench_umbmark.png` (U1 e U2) e `bench_straight.png` (S1 e S2).
+Medidas: `results/day2/bench_u2.csv` e `results/day2/bench_s2.csv`; erros por execução: `results/day2/plots/bench_u2.csv`, `bench_s2.csv`; gráficos: `results/day2/plots/bench_umbmark.png` (U1 e U2) e `bench_straight.png` (S1 e S2).
 
 Convenção de sinais, a mesma do U1: em Q1 (CCW) negativo para a parede e positivo para o centro, que é a da arena; em Q4 (CW) também negativo para a parede, que é o contrário da arena, então os y do CW foram gravados com o sinal trocado (nota em cada linha).
 
@@ -362,8 +362,8 @@ R = 1166.1 m, Ed = 1.00019, Eb = 0.99967, c_L = 0.99991, c_R = 1.00009
 
 ### Conferências da sessão
 
-- Odometria contra a referência em Python: as 17 execuções batem, |Δx|, |Δy| ≤ 0,83 µm e |Δθ| ≤ 0,83 µrad (`data/day2/plots/odometry_check_20261021-163750.csv`).
-- `data/day2/20261021-163750_app_status.csv` (21 470 linhas): 0 overrun, 0 emergência, atraso do tick ≤ 1,66 ms, corpo do tick ≤ 0,78 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), `pwm_err` = 0, 0 erro de encoder, nenhum `hook`.
+- Odometria contra a referência em Python: as 17 execuções batem, |Δx|, |Δy| ≤ 0,83 µm e |Δθ| ≤ 0,83 µrad (`results/day2/plots/odometry_check_20261021-163750.csv`).
+- `results/day2/20261021-163750_app_status.csv` (21 470 linhas): 0 overrun, 0 emergência, atraso do tick ≤ 1,66 ms, corpo do tick ≤ 0,78 ms, dt 18,7–21,6 ms, pico da pilha da Bridge 872–904 B (≥ 1144 B intactos), `pwm_err` = 0, 0 erro de encoder, nenhum `hook`.
 
 ### Conclusões
 

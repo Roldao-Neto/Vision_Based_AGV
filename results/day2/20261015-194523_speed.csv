@@ -1,0 +1,2 @@
+rx_monotonic,t_ms,record_id,duration_ms,reason,v_mm_s,accel_mm_s2,counts_l,counts_r,errors_l,errors_r,samples
+4725.226614255,217290,1,2000,1,250,500,2358,2363,0,0,101

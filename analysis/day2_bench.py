@@ -1,6 +1,6 @@
 """Day 2 bench: straight runs, Es, UMBmark, Ed and Eb (PC only).
 
-Reads the tape values of each bench step, data/day2/bench_<step>.csv (s1, u1, s2, u2; any of
+Reads the tape values of each bench step, results/day2/bench_<step>.csv (s1, u1, s2, u2; any of
 them may be missing), one row per run, all in mm:
 
     run,session,record_id,start_dx,start_dy,start_dyf,end_dx,end_dy,end_dyf,notes
@@ -14,15 +14,15 @@ them may be missing), one row per run, all in mm:
   at the cross of its start mark, (459, 250) mm CCW and (459, 1250) mm CW.
 - start_* are optional: when blank, the reference point is on the cross with θ0 = 0.
 
-data/day2/bench_setup.csv holds rear_to_front_mm, the horizontal distance between the two
+results/day2/bench_setup.csv holds rear_to_front_mm, the horizontal distance between the two
 measured points on the robot.
 
 For each run, the odometry start and end poses and the constants it used come from the run's
 end report in the events log. Errors are real − odometry, in the run's start frame (Borenstein
 and Feng 1996, Eq. 3.1; analysis/bench.py). Prints the tables and the corrected constants, and
-writes data/day2/plots/bench_<step>.csv, bench_straight.png and bench_umbmark.png.
+writes results/day2/plots/bench_<step>.csv, bench_straight.png and bench_umbmark.png.
 
-    uv run python analysis/day2_bench.py data/day2
+    uv run python analysis/day2_bench.py results/day2
 """
 
 import csv

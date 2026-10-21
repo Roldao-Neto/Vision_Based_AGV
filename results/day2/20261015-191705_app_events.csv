@@ -1,0 +1,6 @@
+rx_monotonic,event,detail
+3027.143877687,start,status=20261015-191705_app_status.csv events=20261015-191705_app_events.csv
+3027.151552416,mcu_ready,attempts=1 after=0.0s last_error=None
+3620.700489361,cmd,"speed 250 500 4500 937 -> mode(4, 250, 500, 4500, 937) ack=True"
+3625.235242788,speed_end,record_id=1 duration_ms=4500 reason=distance v_mm_s=250 accel_mm_s2=500 counts_l=6211 counts_r=6215 errors_l=0 errors_r=0 samples=226
+3626.12351866,speed_samples,record_id=1 samples=226 file=20261015-192704_speed_1_v250_a500.csv

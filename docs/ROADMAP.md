@@ -92,7 +92,7 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 - [x] Python reference implementation of the odometry + pytest, fed with recorded tick logs, to cross-check the firmware: `analysis/odometry.py`, `tests/test_odometry.py`, `analysis/day2_odometry_check.py`. The four off-floor `straight` runs agree within 0.8 µm and 0.5 µrad.
 - [x] The same check on `umbmark` (four off-floor runs within 0.9 µm and 0.9 µrad), plus a per-phase table (where each leg and turn ended against its target) and the path plot.
 
-**Bench** (log `docs/logs/day2-bench.md`; tape values in `data/day2/bench_<step>.csv`, analysis in `analysis/day2_bench.py`).
+**Bench** (log `docs/logs/day2-bench.md`; tape values in `results/day2/bench_<step>.csv`, analysis in `analysis/day2_bench.py`).
 - [x] Analysis ready before the measurements: real pose from the tape measurements (rear corners at first, replaced on the bench day by the reference and front points, item 1), errors, Es, the paper's UMBmark formulas and corrections (`analysis/bench.py`, tested on a simulated robot with known Ed and Eb in `tests/test_bench.py`), the CSV format and the per-run procedure (`docs/logs/day2-bench.md`, item 0).
 
 The order follows UMBmark (Borenstein and Feng, "Measurement and Correction of Systematic Odometry Errors in Mobile Robots", IEEE Trans. Robotics and Automation 12(6), 869–880, 1996, Section 2.2). UMBmark measures the wheel-diameter ratio Ed and the wheelbase error Eb, and assumes the scaling error Es (the mean real wheel diameter versus the nominal one, i.e. the mean m/count) has already been measured with a tape and corrected. Es also changes every turn, so if it is left in, UMBmark reads it as a wheelbase error.

@@ -22,7 +22,7 @@ Para a comparação ser exata, o firmware foi preparado no item 3 de `docs/logs/
 
 ```bash
 uv run pytest tests/test_odometry.py
-uv run python analysis/day2_odometry_check.py data/day2/20261015-194151_app_events.csv
+uv run python analysis/day2_odometry_check.py results/day2/20261015-194151_app_events.csv
 ```
 
 Passo a passo do `day2_odometry_check.py`: percorre o log de eventos; guarda cada `straight_end` (ou `umbmark_end`) pelo `record_id`; quando chega o `run_samples` do mesmo `record_id`, abre o arquivo de amostras, converte as constantes (pm → m, nm → m) e a pose de início (µm, µrad), integra as contagens amostra a amostra e subtrai a pose de fim do firmware.
@@ -31,7 +31,7 @@ Passo a passo do `day2_odometry_check.py`: percorre o log de eventos; guarda cad
 
 `uv run pytest`: 26 testes passam (4 novos); `basedpyright` sem erros.
 
-As execuções fora do chão (`data/day2/20261015-194151_app_events.csv`):
+As execuções fora do chão (`results/day2/20261015-194151_app_events.csv`):
 
 | Execução | Modo | Parâmetros | Fim | Δx (µm) | Δy (µm) | Δθ (µrad) | Bate |
 |---|---|---|---|---|---|---|---|
@@ -40,7 +40,7 @@ As execuções fora do chão (`data/day2/20261015-194151_app_events.csv`):
 | 4 | straight | 250 500 2000 1380 | tempo | 0,15 | 0,42 | −0,46 | sim |
 | 5 | straight | 250 500 8000 1380 | comando | 0,23 | −0,60 | 0,38 | sim |
 
-No chão (`data/day2/20261015-194856_app_events.csv`, cinco `straight` de 1380 mm, ida e volta), as cinco batem: |Δx|, |Δy| ≤ 0,61 µm e |Δθ| ≤ 0,62 µrad (`data/day2/plots/odometry_check_20261015-194856.csv`).
+No chão (`results/day2/20261015-194856_app_events.csv`, cinco `straight` de 1380 mm, ida e volta), as cinco batem: |Δx|, |Δy| ≤ 0,61 µm e |Δθ| ≤ 0,62 µrad (`results/day2/plots/odometry_check_20261015-194856.csv`).
 
 As diferenças são menores que 1 µm e 1 µrad: é o arredondamento do relatório (0,5 µm, 0,5 µrad) e das constantes. A odometria do firmware faz exatamente a conta do ROADMAP sobre as contagens gravadas.
 
@@ -66,12 +66,12 @@ O `umbmark` (`docs/logs/day2-firmware.md`, item 4) manda o mesmo `run_end` e as 
 | `python/telemetry.py` | as amostras têm um formato só (`RUN_SAMPLE_HEADER`) e o fim de execução um tratador só (`on_run_end`), depois da saída do `speed` |
 
 ```bash
-uv run python analysis/day2_odometry_check.py data/day2/20261015-214618_app_events.csv
+uv run python analysis/day2_odometry_check.py results/day2/20261015-214618_app_events.csv
 ```
 
 ### Resultados
 
-As quatro execuções no ar (`data/day2/plots/odometry_check_20261015-214618.csv`, `day2_odometry_20261015-214618.png`):
+As quatro execuções no ar (`results/day2/plots/odometry_check_20261015-214618.csv`, `day2_odometry_20261015-214618.png`):
 
 | Execução | Modo | Parâmetros | Fim | Δx (µm) | Δy (µm) | Δθ (µrad) | Bate |
 |---|---|---|---|---|---|---|---|

@@ -1,0 +1,6 @@
+run,session,record_id,start_dx,start_dy,start_dyf,end_dx,end_dy,end_dyf,notes
+1,20261021-163750,13,0,0,0,0,10,10,dx not given (reached B)
+2,20261021-163750,14,0,0,0,0,0,0,"perfect run" (Rolds)
+3,20261021-163750,15,0,0,0,0,0,0,"perfect run" (Rolds)
+4,20261021-163750,16,0,0,0,0,9,9,dx not given (reached B)
+5,20261021-163750,17,0,0,0,0,4,4,dx not given (reached B)

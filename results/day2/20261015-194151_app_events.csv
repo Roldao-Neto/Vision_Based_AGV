@@ -1,0 +1,19 @@
+rx_monotonic,event,detail
+4513.163445946,start,status=20261015-194151_app_status.csv events=20261015-194151_app_events.csv
+4513.171368935,mcu_ready,attempts=1 after=0.0s last_error=None
+4723.195361407,cmd,"speed 250 500 1500 450 -> mode(4, 250, 500, 1500, 450) ack=True"
+4725.226937744,speed_end,record_id=1 duration_ms=2000 reason=time v_mm_s=250 accel_mm_s2=500 counts_l=2358 counts_r=2363 errors_l=0 errors_r=0 samples=101
+4725.619484002,speed_samples,record_id=1 samples=101 file=20261015-194523_speed_1_v250_a500.csv
+4731.837906449,cmd,"straight 250 500 8000 1380 -> mode(5, 250, 500, 8000, 1380) ack=True"
+4737.937624366,straight_end,record_id=2 duration_ms=6060 reason=target p1=250 p2=500 p3=8000 p4=1380 counts_l=8580 counts_r=8587 errors_l=0 errors_r=0 samples=304 x0_um=375712 y0_um=9438 th0_urad=28138 x_um=1754364 y_um=48201 th_urad=33321 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+4740.350443964,run_samples,record_id=2 samples=304 file=20261015-194538_straight_2_v250_d1380.csv
+4764.375398486,cmd,"straight -250 500 8000 500 -> mode(5, -250, 500, 8000, 500) ack=True"
+4766.902193898,straight_end,record_id=3 duration_ms=2499 reason=target p1=-250 p2=500 p3=8000 p4=500 counts_l=-3110 counts_r=-3103 errors_l=0 errors_r=0 samples=126 x0_um=1754364 y0_um=48201 th0_urad=33321 x_um=1255492 y_um=31525 th_urad=38504 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+4767.898064549,run_samples,record_id=3 samples=126 file=20261015-194606_straight_3_v-250_d500.csv
+4779.043414693,cmd,"straight 250 500 2000 1380 -> mode(5, 250, 500, 2000, 1380) ack=True"
+4781.57537571,straight_end,record_id=4 duration_ms=2500 reason=time p1=250 p2=500 p3=2000 p4=1380 counts_l=3137 counts_r=3136 errors_l=0 errors_r=0 samples=126 x0_um=1255492 y0_um=31525 th0_urad=38504 x_um=1759094 y_um=50840 th_urad=37764 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+4782.570981407,run_samples,record_id=4 samples=126 file=20261015-194620_straight_4_v250_d1380.csv
+4787.284130542,cmd,"straight 250 500 8000 1380 -> mode(5, 250, 500, 8000, 1380) ack=True"
+4790.304184432,cmd,"idle -> mode(0, 0, 0, 0, 0) ack=True"
+4790.84397901,straight_end,record_id=5 duration_ms=3521 reason=command p1=250 p2=500 p3=8000 p4=1380 counts_l=4693 counts_r=4696 errors_l=0 errors_r=0 samples=177 x0_um=1759094 y0_um=50840 th0_urad=37764 x_um=2512873 y_um=79191 th_urad=39985 m_per_count_l_pm=160680063 m_per_count_r_pm=160680063 track_nm=217000000
+4792.24520478,run_samples,record_id=5 samples=177 file=20261015-194630_straight_5_v250_d1380.csv
