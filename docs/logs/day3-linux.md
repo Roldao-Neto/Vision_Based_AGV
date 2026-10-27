@@ -1,5 +1,7 @@
 # Dia 3 — Linux: gerente de missão, centro ↔ eixo, relógio, Flask e logs
 
+> **Arquivo:** os dados e os gráficos deste dia estão no branch `day3` (tag `day3-final`), em `results/day3/`. O código continua no `main`, onde `data/day3/` não é versionado.
+
 ## 1. O que foi feito e por quê
 
 O bloco Linux do Dia 3 põe no Python o que o firmware espera receber: uma missão que manda `reset_pose` e `set_path`, espera o ARRIVED pela `pose` e termina. 

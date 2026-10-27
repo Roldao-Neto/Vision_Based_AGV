@@ -139,13 +139,6 @@ class Camera:
         if verbose:
             print(f"  ok focus_absolute = {focus}")
 
-    def assert_focus(self):
-        focus = self._ctrl("focus_absolute")
-        if focus != self.FOCUS:
-            raise RuntimeError(
-                f"[Camera] focus is {focus}, calibration assumes {self.FOCUS}")
-        return focus
-
     def read(self):
         if self._cap is None:
             raise RuntimeError("[Camera] Camera is not opened")

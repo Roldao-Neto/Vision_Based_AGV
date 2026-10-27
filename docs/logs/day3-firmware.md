@@ -1,5 +1,7 @@
 # Dia 3 — Firmware
 
+> **Arquivo:** os dados e os gráficos deste dia estão no branch `day3` (tag `day3-final`), em `results/day3/`. O código continua no `main`, onde `data/day3/` não é versionado.
+
 ## 0. Ponto de partida: limpeza do `main` depois do Dia 2
 
 O Dia 2 foi arquivado no branch `day2` (tag `day2-final`, com os dados em `results/day2/`), e o `main` ficou só com o que o Dia 3 usa. O que sai foi decidido por Rolds, item a item.
@@ -58,7 +60,7 @@ Com o robô em A, antes de cada execução, mandaram-se os comandos e foi julgad
 
 ### Resultados
 
-Dados em `data/day3/` (mesma sessão dos itens 4 e 5): `20261022-174445_app_*.csv`, `20261022-1752*`–`1801*_path_<record>_paths1.csv`, `record_id` 7 a 14.
+Dados em `data/day3/` (a sessão também tem as 6 execuções fora do chão, `record_id` 1 a 6): `20261022-174445_app_*.csv`, `20261022-1752*`–`1801*_path_<record>_paths1.csv`, `record_id` 7 a 14.
 
 **A→B, 5 seguidas: 5 aprovadas.**
 
