@@ -1,0 +1,17 @@
+rx_monotonic,event,detail
+2673.61597153,start,status=20261022-182444_app_status.csv events=20261022-182444_app_events.csv
+2673.640472575,mcu_ready,attempts=1 after=0.0s last_error=None
+2691.13944899,mission_start,"path_id=1 start_axle_mm=[178, 745] path_mm=[1581, 745]"
+2697.311694376,path_end,record_id=1 duration_ms=6140 reason=target p1=1 p2=1 p3=0 p4=1 counts_l=8904 counts_r=8896 errors_l=0 errors_r=0 samples=308 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580922 y_um=745162 th_urad=5591 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+2697.333897344,mission_arrived,"path_id=1 after=6.19s seen_by=run_end axle=(1.5809, 0.7452) theta=0.0056"
+2699.766741889,run_samples,record_id=1 samples=308 file=20261022-182510_path_1_paths1.csv
+2752.860155674,mission_start,"path_id=2 start_axle_mm=[178, 745] path_mm=[1581, 745]"
+2754.276650492,mission_abort,path_id=2
+2754.866605166,path_end,record_id=2 duration_ms=1980 reason=command p1=2 p2=1 p3=0 p4=1 counts_l=2204 counts_r=2208 errors_l=0 errors_r=0 samples=100 x0_um=178000 y0_um=745000 th0_urad=0 x_um=525735 y_um=745114 th_urad=5750 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+2754.881328535,mission_aborted,path_id=2 after=2.02s
+2755.640701385,run_samples,record_id=2 samples=100 file=20261022-182606_path_2_paths1.csv
+2773.078358033,mission_start,"path_id=3 start_axle_mm=[178, 745] path_mm=[1581, 745]"
+2777.373324518,mission_abort,path_id=3
+2777.904352719,path_end,record_id=3 duration_ms=4800 reason=command p1=3 p2=1 p3=0 p4=1 counts_l=6767 counts_r=6764 errors_l=0 errors_r=0 samples=241 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1244457 y_um=745194 th_urad=6498 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+2777.92805981,mission_aborted,path_id=3 after=4.85s
+2779.830884879,run_samples,record_id=3 samples=241 file=20261022-182631_path_3_paths1.csv

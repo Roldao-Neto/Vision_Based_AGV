@@ -58,7 +58,7 @@ Com o robô em A, antes de cada execução, mandaram-se os comandos e foi julgad
 
 ### Resultados
 
-Dados em `data/day3/` (mesma sessão dos itens 4 e 5): `20261022-174445_app_*.csv`, `20261022-1752*`–`1801*_path_<record>_paths1.csv`, `record_id` 7 a 14.
+Dados em `results/day3/` (a sessão também tem as 6 execuções fora do chão, `record_id` 1 a 6): `20261022-174445_app_*.csv`, `20261022-1752*`–`1801*_path_<record>_paths1.csv`, `record_id` 7 a 14.
 
 **A→B, 5 seguidas: 5 aprovadas.**
 
@@ -87,9 +87,9 @@ Dados em `data/day3/` (mesma sessão dos itens 4 e 5): `20261022-174445_app_*.cs
 
 **Conferências da sessão inteira** (~1300 s, 14 execuções):
 
-- `uv run python analysis/odometry_check.py data/day3/20261022-174445_app_events.csv`
+- `uv run python analysis/odometry_check.py results/day3/20261022-174445_app_events.csv`
  
-- (`data/day3/plots/odometry_check_20261022-174445.csv` e `odometry_20261022-174445.png`).
+- (`results/day3/plots/odometry_check_20261022-174445.csv` e `odometry_20261022-174445.png`).
 
 ### Conclusões
 

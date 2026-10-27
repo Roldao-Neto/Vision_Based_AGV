@@ -1,0 +1,62 @@
+rx_monotonic,event,detail
+274.726134249,start,status=20261022-174445_app_status.csv events=20261022-174445_app_events.csv
+274.737343205,mcu_ready,attempts=1 after=0.0s last_error=None
+277.559281743,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+296.843770795,cmd,"path 1 1581 745 -> set_path(1, [1581, 745]) ack=True"
+303.055377481,path_end,record_id=1 duration_ms=6180 reason=target p1=1 p2=1 p3=0 p4=1 counts_l=8899 counts_r=8896 errors_l=0 errors_r=0 samples=310 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580528 y_um=745118 th_urad=9235 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+305.513869043,run_samples,record_id=1 samples=310 file=20261022-174516_path_1_paths1.csv
+314.924339922,cmd,"path 2 1581 1100 -> set_path(2, [1581, 1100]) ack=True"
+318.270964922,path_end,record_id=2 duration_ms=3319 reason=target p1=2 p2=1 p3=0 p4=1 counts_l=1172 counts_r=3318 errors_l=0 errors_r=0 samples=167 x0_um=1580528 y0_um=745118 th0_urad=9235 x_um=1580581 y_um=1099578 th_urad=1577657 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+319.591809512,run_samples,record_id=2 samples=167 file=20261022-174530_path_2_paths1.csv
+327.980328727,cmd,stop -> stop() ack=True
+337.021832398,cmd,"path 3 1581 300 -> set_path(3, [1581, 300]) ack=True"
+343.133361634,path_end,record_id=3 duration_ms=6080 reason=target p1=3 p2=1 p3=0 p4=1 counts_l=2912 counts_r=7205 errors_l=0 errors_r=0 samples=305 x0_um=1580581 y0_um=1099578 th0_urad=1577657 x_um=1581108 y_um=300779 th_urad=4715960 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+345.548277909,run_samples,record_id=3 samples=305 file=20261022-174556_path_3_paths1.csv
+349.680407663,cmd,"idle -> mode(0, 0, 0, 0, 0) ack=True"
+548.867036905,cmd,"path 4 178 300 -> set_path(4, [178, 300]) ack=True"
+550.884287427,cmd,stop -> stop() ack=True
+560.338345343,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=False"
+566.571377837,cmd,"path 5 1581 300 -> set_path(5, [1581, 300]) ack=True"
+568.387282559,cmd,"path 6 178 300 -> set_path(6, [178, 300]) ack=False"
+570.080296264,path_end,record_id=4 duration_ms=21161 reason=target p1=5 p2=2 p3=0 p4=1 counts_l=799 counts_r=2956 errors_l=0 errors_r=0 samples=1059 x0_um=1581108 y0_um=300779 th0_urad=4715960 x_um=1580187 y_um=299807 th_urad=6291934 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+570.202008362,cmd,"idle -> mode(0, 0, 0, 0, 0) ack=True"
+578.577652965,run_samples,record_id=4 samples=1059 file=20261022-174949_path_4_paths2.csv
+584.867877356,cmd,"path 7 178 300 -> set_path(7, [178, 300]) ack=True"
+586.686074245,cmd,"idle -> mode(0, 0, 0, 0, 0) ack=True"
+587.054171164,path_end,record_id=5 duration_ms=2161 reason=command p1=7 p2=1 p3=0 p4=1 counts_l=-1996 counts_r=1987 errors_l=0 errors_r=0 samples=109 x0_um=1580187 y0_um=299807 th0_urad=6291934 x_um=1579409 y_um=299725 th_urad=9197587 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+587.89343378,run_samples,record_id=5 samples=109 file=20261022-174959_path_5_paths1.csv
+602.156422109,cmd,"path 8 178 300 -> set_path(8, [178, 300]) ack=True"
+607.557428657,path_end,record_id=6 duration_ms=2680 reason=heartbeat p1=8 p2=1 p3=0 p4=1 counts_l=3070 counts_r=3376 errors_l=0 errors_r=0 samples=135 x0_um=1579486 y0_um=299707 th0_urad=9196857 x_um=1071414 y_um=299727 th_urad=9424226 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+607.566190012,run_samples,record_id=6 samples=135 file=20261022-175018_path_6_paths1.csv
+728.836964487,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+731.25413416,cmd,"path 1 1581 745 -> set_path(1, [1581, 745]) ack=True"
+737.444125156,path_end,record_id=7 duration_ms=6160 reason=target p1=1 p2=1 p3=0 p4=1 counts_l=8902 counts_r=8891 errors_l=0 errors_r=0 samples=309 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580370 y_um=745068 th_urad=3398 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+739.901269641,run_samples,record_id=7 samples=309 file=20261022-175231_path_7_paths1.csv
+809.58050547,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+811.397135245,cmd,"path 2 1581 745 -> set_path(2, [1581, 745]) ack=True"
+817.594848108,path_end,record_id=8 duration_ms=6160 reason=target p1=2 p2=1 p3=0 p4=1 counts_l=8902 counts_r=8893 errors_l=0 errors_r=0 samples=309 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580528 y_um=745126 th_urad=4858 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+820.053751792,run_samples,record_id=8 samples=309 file=20261022-175351_path_8_paths1.csv
+893.140687485,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+894.956738504,cmd,"path 3 1581 745 -> set_path(3, [1581, 745]) ack=True"
+901.159063849,path_end,record_id=9 duration_ms=6161 reason=target p1=3 p2=1 p3=0 p4=1 counts_l=8903 counts_r=8897 errors_l=0 errors_r=0 samples=309 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580922 y_um=745173 th_urad=7050 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+903.607930179,run_samples,record_id=9 samples=309 file=20261022-175514_path_9_paths1.csv
+966.247134508,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+968.064432572,cmd,"path 4 1581 745 -> set_path(4, [1581, 745]) ack=True"
+974.295685174,path_end,record_id=10 duration_ms=6200 reason=target p1=4 p2=1 p3=0 p4=1 counts_l=8904 counts_r=8895 errors_l=0 errors_r=0 samples=311 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580843 y_um=745045 th_urad=4861 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+976.787393872,run_samples,record_id=10 samples=311 file=20261022-175628_path_10_paths1.csv
+1016.862062002,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+1018.678738437,cmd,"path 5 1581 745 -> set_path(5, [1581, 745]) ack=True"
+1024.884087841,path_end,record_id=11 duration_ms=6179 reason=target p1=5 p2=1 p3=0 p4=1 counts_l=8904 counts_r=8893 errors_l=0 errors_r=0 samples=310 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580686 y_um=745127 th_urad=3401 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+1027.341886098,run_samples,record_id=11 samples=310 file=20261022-175718_path_11_paths1.csv
+1104.22141342,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+1106.039326191,cmd,"path 6 600 745 900 1000 1250 1000 1250 745 1581 745 -> set_path(6, [600, 745, 900, 1000, 1250, 1000, 1250, 745, 1581, 745]) ack=True"
+1120.268157299,path_end,record_id=12 duration_ms=14199 reason=target p1=6 p2=1 p3=4 p4=5 counts_l=11124 counts_r=11115 errors_l=0 errors_r=0 samples=711 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580990 y_um=745547 th_urad=7711 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+1125.987625834,run_samples,record_id=12 samples=711 file=20261022-175857_path_12_paths1.csv
+1193.79301387,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+1195.612776817,cmd,"path 7 600 745 900 1000 1250 1000 1250 745 1581 745 -> set_path(7, [600, 745, 900, 1000, 1250, 1000, 1250, 745, 1581, 745]) ack=True"
+1209.773366396,path_end,record_id=13 duration_ms=14119 reason=target p1=7 p2=1 p3=4 p4=5 counts_l=11114 counts_r=11110 errors_l=0 errors_r=0 samples=707 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1580440 y_um=745538 th_urad=11349 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+1215.454911036,run_samples,record_id=13 samples=707 file=20261022-180026_path_13_paths1.csv
+1257.860831747,cmd,"reset_pose 178 745 0 -> reset_pose(178, 745, 0) ack=True"
+1259.684491113,cmd,"path 8 600 745 900 1000 1250 1000 1250 745 1581 745 -> set_path(8, [600, 745, 900, 1000, 1250, 1000, 1250, 745, 1581, 745]) ack=True"
+1273.87134822,path_end,record_id=14 duration_ms=14157 reason=target p1=8 p2=1 p3=4 p4=5 counts_l=11112 counts_r=11104 errors_l=0 errors_r=0 samples=709 x0_um=178000 y0_um=745000 th0_urad=0 x_um=1579903 y_um=745688 th_urad=8426 m_per_count_l_pm=157493246 m_per_count_r_pm=157770678 track_nm=216077750
+1279.557324551,run_samples,record_id=14 samples=709 file=20261022-180130_path_14_paths1.csv
