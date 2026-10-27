@@ -22,7 +22,7 @@ Every measurement the thesis reports, with its repetitions. The details are in e
 | 2 | UMBmark **before** (Es corrected) | 5 CW + 5 CCW | error clusters, E_max,syst | done |
 | 2 | Ed and Eb correction (Borenstein) | from those 10 runs | m/count per wheel, b | done |
 | 2 | **After** calibration | 5 × A→B + 5 CW + 5 CCW UMBmark | the same | done |
-| 3 | A→B without obstacles | 5 in a row, then one multi-waypoint path 3 times | arrival error of the center, odometry error | |
+| 3 | A→B without obstacles | 5 in a row, then one multi-waypoint path 3 times | pass/fail: P stops inside a 5 cm circle around B_ref (the arrival error is measured on Day 7, S0) | done: 5/5 and 3/3 pass (sent with `./deploy.sh run`; they count, decided by Rolds) |
 | 5 | Distance methods (a) k/h and (b) homography | per class: 0.3–1.0 m every 0.1 m, centered and to each side, 20 detections per position | error versus distance | |
 | 5 | Distance while driving and braking | 5 approaches per class | error versus the static curve | |
 | 7 | S0 / S1 / S2 missions | 10 each | success, arrival error, detection distance, replans, time | |
@@ -99,41 +99,25 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 
 ## Day 3 — Point-to-point control, Bridge and UI: A→B without obstacles
 
-**Firmware**
-- [ ] State machine IDLE → ROTATE → DRIVE → ARRIVED with a waypoint queue (≤ 32 absolute (x, y) points).
-- [ ] Trapezoidal ramps: 0.25 m/s cruise, 0.5 m/s², rotation up to 90 °/s at α = 2a/b. Below |error| = 3° the rotation ramps ω down to zero and ROTATE ends with ω = 0.
-  - The ramp uses the **along-track** remaining distance `s = (w − p)·u`, never the Euclidean distance.
-- [ ] DRIVE: heading target re-aimed at the waypoint every tick; freeze it within 10 cm; go back to ROTATE if |error| > 30°.
-- [ ] Stop at every waypoint:
-  - the ramp reaches zero speed exactly at the waypoint;
-  - below `s` = 1–2 cm (including `s < 0`) steering stops and the speed keeps ramping down; ARRIVED when the commanded and measured speeds are zero;
-  - 5 cm only as a timeout fallback, logged.
-- [ ] Bridge, every handler through the command queue:
-  - `pose` notify every 2nd tick (25 Hz): `t_ms, x, y, θ, state, path_id, wp_idx`, with `t_ms` an integer;
-  - `set_path(id, [x1_mm, y1_mm, …])` with ack: 1 to 32 absolute waypoints in integer mm, start not included; validate an even length from 2 to 64 and return `false` otherwise;
-  - `reset_pose(x_mm, y_mm, θ_mrad)` with the axle pose as integers;
-  - `stop` (ramped, 0.5 m/s²);
-  - `mode` with an integer mode code and integer parameters.
-- [ ] Heartbeat watchdog: no `hb` for 1 s → brake and stop (disabled in calibration modes). This is the only place, besides emergencies, where the short brake is used.
+**Firmware** (details in `docs/logs/day3-firmware.md`)
+- [x] Starting point: `main` cleaned of the Day 2 calibration analysis (archived in branch `day2`, tag `day2-final`); `analysis/bench.py` keeps `pose_from_tapes` and `run_error` for Day 7.
+- [x] Decided by Rolds before the code: the waypoint follower runs on the STM32 (it needs the pose of the same tick) and the mission on Linux; `straight` (5) and `umbmark` (6) transformed into the follower in place, codes 5–6 stay unused; `set_path` starts the motion; no time or distance limit and no 5 cm timeout fallback (he watches every run, and a runaway is a failed run, registered).
+- [x] `follower` (pure C++, from Day 2's `tick_turn` and `tick_leg`): IDLE → ROTATE → DRIVE → ARRIVED over ≤ 32 absolute waypoints. ROTATE to θ + wrap(bearing − θ), the shortest turn added to the unwrapped θ, on the Day 2 angular profile; DRIVE with `u` and the heading target re-aimed every tick and frozen within 10 cm, the ramp on the along-track `s = (w − p)·u`, back to ROTATE above 30°; a stop at every waypoint, and a waypoint within 1.5 cm counts as reached. Native tests on a robot that answers a tick late: A→B ARRIVED in 6.24 s, 4.2 mm past the waypoint; 3 cm off and 3° skewed converges to 2.0 mm lateral; a 45° push brakes, rotates again and arrives within 4.0 mm.
+- [x] Mode `path` (7) and the Bridge, every handler through the command queue: `set_path` (1–32 waypoints in integer mm, refused unless the wheels are still, without an `hb` in the last second or outside the arena), `reset_pose(x_mm, y_mm, θ_mrad)` (only with no run open), `stop` (ramped pause), `mode idle` (ramped end), and `pose` every 2nd tick (25 Hz: `t_ms, x, y, θ, state, path_id, wp_idx`; ARRIVED holds until the next path).
+- [x] A run is the whole mission (decided by Rolds): from the first `set_path` to the goal or a failure, replans included; `stop` pauses it and the next `set_path` is a replan with no wait, `idle` ends it. Every tick is recorded, pauses included, into a 60 s buffer (3000 samples, 96 KB; 104 416 B of RAM left), and `run_end` (p2 = paths in the run) and the samples go out only when it ends.
+- [x] Heartbeat watchdog: 1 s without `hb` during a run, paused included, ends it (reason 7) and leaves the wheels in short brake, its only use besides emergencies.
+- [x] Off the floor: three paths ended by target with the right signs (a +90° turn and a 180° turn the shortest way), 0.4–0.8 mm short of the waypoint; `stop` mid-leg paused the run; `reset_pose` in the pause and `set_path` while turning were refused; a replan in the same run ended by target with p2 = 2 in one samples file (1059 samples, the 15.2 s pause recorded); `idle` mid-turn ended by command on the ramp; `docker pause` ended by heartbeat ~1 s after the last `hb`.
+- [x] On the floor, sent with `./deploy.sh run` (they count, decided by Rolds): **5 of 5 A→B and 3 of 3 on a 5-waypoint path** (A → (600, 745) → (900, 1000) → (1250, 1000) → (1250, 745) → (1581, 745), turns of ±40° and ±90°), with P inside the 5 cm circle around B_ref in all 8 (the arrival error is measured with the tape cross on Day 7, S0). By odometry, A→B ended 0.1–0.6 mm short of the waypoint in 6.16–6.20 s, the 5-waypoint path stopped within 1.3 mm of every waypoint in ~14.2 s, and the heading at the end was 3–11 mrad off (steering holds in the last 1.5 cm). The simulation predicted ~4 mm past; on the floor it stops short.
+- [x] Every session: firmware and Python odometry (`analysis/odometry_check.py`, which was `day2_odometry_check.py`) agree within 0.8 µm and 0.8 µrad on all 14 runs, the pause, the replan and the command and heartbeat ends included; 0 overruns, 0 encoder errors, Bridge stack peak ≤ 992 B (≥ 1056 B untouched); two `hook`s of ~4 ms, each when a 5-waypoint `set_path` arrived with the robot stopped.
 
-**Linux**
-- [ ] Mission manager, in its own thread and the only sender of motion commands:
-  - `reset_pose` with the start axle pose (178, 745, 0);
-  - sends the path, only while the robot is stopped;
-  - waits for ARRIVED on the last `wp_idx` of the current `path_id`.
-  Bridge `call`s are never made from inside a `Bridge.provide` handler (it raises `RuntimeError`).
-- [ ] Robot center ↔ axle midpoint conversion (axle is 7 cm behind the center). Everything is planned and sent in axle coordinates: the start is A − 7 cm in x; the path is planned to B, then the last waypoint is pulled back 7 cm along the last segment so the **center** ends at B.
-- [ ] Clock sync: `t_ms` is the STM32 clock and is not synchronized with Linux.
-  - On every `pose`, store the Linux monotonic receive time.
-  - Estimate the offset as the minimum of `(receive − t_ms)` over a sliding window of ~30 s (the least-delayed recent message), and convert poses to the Linux clock.
-  - Record the offset and the jitter it absorbs.
-- [ ] Flask UI: Start / Stop buttons, live pose. The `flask_video_webui` brick builds its Flask app inside `start_simple_video()`, so it must be refactored to create the app in `__init__` and let `main.py` register its own routes.
-- [ ] Per-run CSV logs in `/app/logs/` (poses, paths sent, events).
-
-**README:** fill *Running a mission* (Flask UI, Bridge messages, where logs are saved).
-
-**Done when:** A→B with the robot center reaching B = (1.651, 0.745) within 5 cm in 5 runs in a row, plus one hand-written multi-waypoint path run 3 times.
-**Record:** arrival error of each run (real pose from the tape cross at B, as in Day 2) and the odometry error (real versus reported pose).
+**Linux** (details in `docs/logs/day3-linux.md`)
+- [x] Decided by Rolds: Start runs only A→B until the planner arrives (Days 4–6); Stop sends `idle` (the run ends and its metrics go out), and `stop` stays internal for the Day 6 replan; the clock sync is recorded as columns of the `pose` log.
+- [x] Mission manager (`python/mission.py`, pure, tested with a fake Bridge): the mission thread is the only sender of motion commands and also takes Start/Stop from the UI and `start`/`abort` from `cmd/`. Start sends `reset_pose(178, 745, 0)`, then `set_path(id, [1581, 745])` only if that was acked, and waits for ARRIVED on the last `wp_idx` of its `path_id` (or its `run_end` by target); any other `run_end` fails it. The Bridge handlers only store data and never call the Bridge.
+- [x] Center ↔ axle (`python/arena.py`): the start axle is A − 7 cm = (0.178, 0.745), and `pull_back_goal()` pulls the last waypoint 7 cm back along the last segment, so the A→B path is the axle at (1.581, 0.745) with the center on B. The UI draws the body around the center from `axle_to_center()`, so the 7 cm lives only in `arena.py`.
+- [x] Clock sync (`python/clock_sync.py`): the STM32 and Linux clocks drift 895–901 ppm apart (not the tens of ppm assumed), so a 30 s sliding minimum lagged the offset by −27 ms; the window is 2 s (decided by Rolds): −1.7 ms bias, median `delay_ms` 2 ms, p99 7 ms. Every `pose` row logs `offset_s`, `delay_ms` and `t_linux`, and the `Pose` handed to the mission carries `t_linux`.
+- [x] Flask UI (`python/webui.py`): Start / Stop, the arena, the path and the live pose on a canvas, `GET /state` polled at 5 Hz. The `flask_video_webui` brick now creates its Flask app in `__init__`, with `video()` waiting for Day 5.
+- [x] Per-run logs: `*_app_pose.csv`, `*_app_paths.csv` (every `set_path` and its ack) and `*_app_events.csv` (`mission_*` events); 56 tests pass.
+- [x] On the board: Start from the page drove A→B by target in 6.14 s (P in the circle); Stop aborted two missions with a ramped stop, the run ending 0.53–0.59 s after the click; 0 overruns, no `hook`. README *Running a mission*, *Logs*, the Bridge table and *Status* filled.
 
 ---
 
@@ -151,8 +135,7 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 
 **PC (in parallel while training runs, pytest)**
 - [ ] Occupancy grid 5 cm (40 × 30 cells), in axle coordinates.
-- [ ] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner). Free axle corridor: x ∈ [0.246, 1.754], y ∈ [0.246, 1.254].
-- [ ] Escape rule for replanning only: if the robot's current cell is inflated, allow crossing inflated (never raw obstacle) cells at extra cost until the first free cell; log every use. The start cell is inside the wall inflation since A was re-measured on Day 2: decide before this day how the first plan leaves it.
+- [ ] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin), except the wall behind A (x = 0), which is not inflated (decided by Rolds in the Day 3 review, so the start cell is free); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner). Free axle corridor: x ≤ 1.754, y ∈ [0.246, 1.254]. Paths never cross inflated cells (no escape rule): no path fails the run.
 - [ ] Dijkstra, 8 neighbours (diagonal cost √2), no corner cutting.
 - [ ] Line-of-sight path simplification on the inflated grid.
 - [ ] Detection association: same class within ~20 cm = same obstacle (average its position). The radius is a parameter, revisited on Day 5.

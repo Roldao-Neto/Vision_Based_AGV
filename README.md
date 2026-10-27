@@ -18,8 +18,15 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 ## Architecture
 
 - **STM32U585 (real time):** encoders, PI speed control per wheel, odometry, heading control, point-to-point waypoint following.
-- **Linux (QRB2210):** camera, Edge Impulse obstacle detector, obstacle distance estimation, occupancy grid, Dijkstra path planning, web UI.
-- **Bridge:** the STM32 streams its pose; Linux sends absolute (x, y) waypoints.
+- **Linux (QRB2210):** camera, Edge Impulse obstacle detector, obstacle distance estimation, occupancy grid, Dijkstra path planning, mission manager, web UI.
+- **Bridge:**
+
+| Direction | Message | What it does |
+|---|---|---|
+| Linux → STM32 | `set_path(id, [x1_mm, y1_mm, …])` | follow 1–32 absolute axle waypoints, stopping at each |
+| Linux → STM32 | `reset_pose(x_mm, y_mm, θ_mrad)` | set the odometry pose of the axle |
+| Linux → STM32 | `stop()` / `mode(0, …)` | ramped stop that pauses the run for a replan / ends it |
+| STM32 → Linux | `pose(t_ms, x, y, θ, state, path_id, wp_idx)` | 25 Hz; state 0 IDLE, 1 ROTATE, 2 DRIVE, 3 ARRIVED |
 
 ## Repository layout
 
@@ -29,77 +36,78 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 | `python/` | Linux application |
 | `bricks/` | Local App bricks: camera handler and Flask video UI |
 | `models/` | Edge Impulse `.eim` model (not versioned) |
+| `tests/` | Python tests and native C++ tests of the pure firmware modules |
+| `analysis/` | PC-only analysis scripts; they read `data/<day>/` and write `data/<day>/plots/` |
 | `docs/` | Roadmap, wiring diagram, development logs |
 
-## Setup and running
+## Setup
 
 Everything is edited on the PC and deployed to the board over Wi-Fi. The board compiles and flashes the sketch itself when the app starts.
 
-### PC
-
-Requirements: [uv](https://docs.astral.sh/uv/), `ssh`, `rsync` and, for the native C++ tests, `g++`.
+**PC.** Requirements: [uv](https://docs.astral.sh/uv/), `ssh`, `rsync` and, for the native C++ tests, `g++`.
 
 ```bash
-uv sync                          # .venv with Python 3.13 and the dev + analysis groups
-uv run pytest                    # Python tests and the native C++ tests of sketch/src (skipped without g++)
-uvx basedpyright python bricks   # type check
+uv sync
+uv run pytest
+uvx basedpyright python bricks
 ```
 
-The `.venv`, `pyproject.toml` and `uv.lock` exist only for the editor, the tests and `analysis/`. The board installs `python/requirements.txt` inside its own container; OpenCV comes with the container image and is never listed there.
-
-### Board access
-
-- An ssh alias `unoq` in `~/.ssh/config` (user `arduino`, key authentication). Another alias can be used with `BOARD=<alias> ./deploy.sh …`.
-- `rsync` installed on the board (`sudo apt-get install rsync`).
-- The board's software is frozen until the experiments are done: no `arduino-app-cli system update`, no `apt upgrade`, no board update from App Lab. The versions are in `docs/board-versions.txt`.
-
-### Deploy and run
+**Board.** An ssh alias `unoq` and `rsync` installed on the board. The board's software stays frozen until the experiments are done (no `system update`, no `apt upgrade`); the versions are in `docs/board-versions.txt`.
 
 ```bash
 ./deploy.sh               # stop the running app, sync, start this app, check versions, follow its logs
 ./deploy.sh --no-follow   # the same, without following the logs
 ```
 
-At start, Python discards any command left in `cmd/` while the app was stopped, retries `ping` until the STM32 answers, and then sends the 5 Hz heartbeat.
+## Running a mission
 
-**Commands** go to the running app with `./deploy.sh run <command>`, which prints the last lines of the events log (the ack):
+1. Deploy and put the robot on A: the rear reference point on the mark, facing B.
+2. Open `http://<board-ip>:8888/` and press **Start**. The mission sets the odometry to the start pose, sends the path to B and waits for ARRIVED. The page draws the arena, the path and the live pose.
+3. **Stop** ends the mission with a ramped stop.
+
+**Frames.** The STM32 tracks the axle midpoint, 7 cm behind the robot center, and every waypoint is in axle coordinates. The start axle is (0.178, 0.745), and the last waypoint is pulled back 7 cm so the **center** stops on B.
+
+**Manual commands** go to the running app with `./deploy.sh run <command>`, which prints the ack:
 
 | Command | What it does |
 |---|---|
-| `idle` | end the current mode |
-| `straight <v_mm_s> <accel_mm_s2> <time_ms> <dist_mm>` | drive `dist_mm` along the start heading (`v` negative = backward) and stop there, heading held by the heading PI |
-| `umbmark <dir> <side_mm> <v_mm_s> <time_ms>` | UMBmark square, `dir` 1 = CCW, −1 = CW: four legs, a 90° turn in place after each |
+| `reset_pose <x_mm> <y_mm> <theta_mrad>` | set the axle pose; at A: `reset_pose 178 745 0` |
+| `path <id> <x1_mm> <y1_mm> …` | `set_path` |
+| `stop` | ramped stop, pauses the run |
+| `idle` | ramped stop, ends the run |
 
-Both end with a `<mode>_end` event (the odometry poses at the start and the end) and a `*_<mode>_<id>_….csv` with one sample per 20 ms tick.
+A **run** lasts from its first `set_path` to the goal or a failure, replans included, and is recorded tick by tick.
 
-**Logs.** Each run writes CSV files with unique names to `/app/logs/` on the board. Between runs:
+## Logs
+
+Each app start writes a set of CSV files with unique names to `/app/logs/` on the board:
+
+| File | Contents |
+|---|---|
+| `*_app_events.csv` | commands, acks, `mission_*` events, the end of every run |
+| `*_app_pose.csv` | every pose, with the Linux clock offset |
+| `*_app_paths.csv` | every `set_path` sent, with its ack |
+| `*_app_status.csv`, `*_app_hook.csv` | STM32 health |
+| `*_path.csv`, `*_path_<record>_paths<n>.csv` | one row per run, and each run's samples (one per 20 ms tick) |
 
 ```bash
-./deploy.sh pull day1     # stop the app and move the board's logs into data/day1/
+./deploy.sh pull day3     # stop the app and move the board's logs into data/day3/
 ```
 
-`pull` leaves the app stopped, and stopping the app resets the STM32, so pull only between runs; the next `./deploy.sh` starts it again. Files already in `data/<day>/` are never overwritten. The PC-only analysis scripts in `analysis/` read `data/<day>/` and write plots to `data/<day>/plots/`.
+`pull` resets the STM32, so pull only between runs. Files already in `data/<day>/` are never overwritten.
 
 ## Calibration
 
-Odometry uses one distance per encoder count for each wheel and the track b (`kOdometry` in `sketch/src/config/config.h`). Each value comes from a measurement:
+Odometry uses one distance per encoder count for each wheel and the track b (`kOdometry` in `sketch/src/config/config.h`): the scale Es from 5 straight A→B runs, then the wheel ratio Ed and the track error Eb from UMBmark (Borenstein and Feng 1996, 5 CW + 5 CCW 1 m squares).
 
-| Parameter | How it is obtained | Value |
-|---|---|---|
-| Encoder counts per wheel revolution | 3 runs of 10 turns by hand (Day 1, `count` mode) | 1319.7 (left), 1319.8 (right), ±0.5; 1319.75 used for both |
-| Nominal distance per count | π · 67.5 mm / 1319.75 | 0.16068 mm |
-| Scale Es (mean distance per count) | 5 straight runs of 1403 mm, A→B, real distance (tape) ÷ odometry distance | 0.98103 → 0.157632 mm per count |
-| Wheel ratio Ed, track error Eb | UMBmark (Borenstein and Feng 1996): 5 CW + 5 CCW 1 m squares, real − odometry end position, the paper's Eqs. 4.20–4.27 | Ed = 1.00176, Eb = 0.99575 |
-| Distance per count, left / right | Es-corrected mean × c_L / c_R = 2/(Ed + 1), 2/(1/Ed + 1) | 0.157493 mm / 0.157771 mm |
-| Track b | 0.217 m × Eb | 216.08 mm |
+| Parameter | Value |
+|---|---|
+| Encoder counts per wheel revolution | 1319.75 (both wheels) |
+| Es / Ed / Eb | 0.98103 / 1.00176 / 0.99575 |
+| Distance per count, left / right | 0.157493 mm / 0.157771 mm |
+| Track b | 216.08 mm |
 
-Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm (below 3·SEM, so a second correction would not help); straight A→B, error along the line −26.7 ± 2.2 → 0.5 ± 0.4 mm and to the side +16.1 ± 3.0 → +4.3 ± 4.7 mm.
-
-Every real pose is measured from a tape cross on the floor: the robot's reference point along and across the line, and a front point on its centreline across the line, which gives the heading. The calibration analysis (`analysis/day2_bench.py`, with the data in `results/day2/`) is archived in branch `day2`, tag `day2-final`; the method and data format are in `docs/logs/day2-bench.md`.
-
-## Running a mission
-
-_To be written on Day 3: web UI, Bridge messages, logs._
+Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm; straight A→B, error along the line −26.7 ± 2.2 → 0.5 ± 0.4 mm and to the side +16.1 ± 3.0 → +4.3 ± 4.7 mm. Method and data: `docs/logs/day2-bench.md` and branch `day2` (tag `day2-final`).
 
 ## Obstacle detection
 

@@ -1,4 +1,4 @@
-"""Reassembly of the sample notifications of one recorded run (straight, umbmark).
+"""Reassembly of the sample notifications of one recorded run (path).
 
 The MCU sends run_samples(record_id, first_index, total, [values...]) in order, with a fixed
 number of values per sample (t_us, phase, v_mm_s, w_mrad_s, counts_l, counts_r, duty_l,

@@ -1,7 +1,10 @@
 import time
+from collections.abc import Callable
 
 from arduino.app_utils import Logger
-from mode_commands import END_REASONS, MODE_NAMES
+from clock_sync import ClockSync
+from mcu_commands import END_REASONS, MODE_NAMES
+from mission import Pose
 from run_log import RunLog, open_run_log
 from run_samples import RunSamples
 
@@ -10,7 +13,8 @@ logger = Logger("AGV")
 STATUS_HEADER = ["rx_monotonic", "t_ms", "late_max_us", "exec_max_us", "hook_max_us", "overruns", "stack_peak", "stack_untouched", "hb_age_ms", "path_id", "emergency", "pwm_hz", "pwm_err", "enc_l", "enc_r", "enc_err_l", "enc_err_r", "mode", "spd_l", "spd_r", "dt_min_us", "dt_max_us", "x_mm", "y_mm", "th_mrad"]
 EVENTS_HEADER = ["rx_monotonic", "event", "detail"]
 HOOK_HEADER = ["rx_monotonic", "t_ms", "hook_us"]
-# Calibration modes (straight, umbmark): one end report and one sample layout for all.
+POSE_HEADER = ["rx_monotonic", "t_ms", "x", "y", "theta", "state", "path_id", "wp_idx", "offset_s", "delay_ms", "t_linux"]
+PATHS_HEADER = ["rx_monotonic", "path_id", "waypoints", "xy_mm", "ack"]
 RUN_END_HEADER = ["rx_monotonic", "t_ms", "record_id", "mode", "duration_ms", "reason", "p1", "p2", "p3", "p4", "counts_l", "counts_r", "errors_l", "errors_r", "samples", "x0_um", "y0_um", "th0_urad", "x_um", "y_um", "th_urad", "m_per_count_l_pm", "m_per_count_r_pm", "track_nm"]
 RUN_SAMPLE_HEADER = ["t_us", "phase", "v_mm_s", "w_mrad_s", "counts_l", "counts_r", "duty_l", "duty_r"]
 
@@ -18,6 +22,11 @@ RUN_SAMPLE_HEADER = ["t_us", "phase", "v_mm_s", "w_mrad_s", "counts_l", "counts_
 status_log = open_run_log("app", STATUS_HEADER, "status")
 events_log = open_run_log("app", EVENTS_HEADER, "events")
 hook_log = open_run_log("app", HOOK_HEADER, "hook")
+pose_log = open_run_log("app", POSE_HEADER, "pose")
+paths_log = open_run_log("app", PATHS_HEADER, "paths")
+clock = ClockSync()
+pose_listeners: list[Callable[[Pose], None]] = []
+run_end_listeners: list[Callable[[int, int], None]] = []  # (path_id, reason)
 end_logs: dict[str, RunLog] = {}  # mode -> summary log, opened by its first end report
 run_names: dict[int, tuple[str, str]] = {}  # record_id -> (mode, samples file name params)
 pending_samples: dict[int, RunSamples] = {}
@@ -37,6 +46,21 @@ def on_status(*values: int) -> None:
 
 def on_hook(*values: int) -> None:
     hook_log.row(time.monotonic(), *values)
+
+
+def on_pose(t_ms: int, x: float, y: float, theta: float, state: int, path_id: int, wp_idx: int) -> None:
+    rx = time.monotonic()
+    offset, delay = clock.update(rx, t_ms)
+    t_linux = clock.to_linux(t_ms)
+    pose_log.row(rx, t_ms, x, y, theta, state, path_id, wp_idx, f"{offset:.6f}", f"{delay:.2f}", f"{t_linux:.6f}")
+    pose = Pose(rx, t_ms, t_linux, x, y, theta, state, path_id, wp_idx)
+    for listener in pose_listeners:
+        listener(pose)
+
+
+def log_path(path_id: int, xy_mm: list[int], ack: object) -> None:
+    """Every set_path sent (the mission's and the cmd/ ones)."""
+    paths_log.row(time.monotonic(), path_id, len(xy_mm) // 2, " ".join(map(str, xy_mm)), repr(ack))
 
 
 def on_run_samples(record_id: int, first: int, total: int, flat: list[int]) -> None:
@@ -59,16 +83,14 @@ def on_run_samples(record_id: int, first: int, total: int, flat: list[int]) -> N
 
 
 def run_name_params(mode: str, record_id: int, p1: int, p2: int, p3: int, p4: int) -> str:
-    """Parameters in the samples file name of a calibration run."""
-    if mode == "straight":
-        return f"{record_id}_v{p1}_d{p4}"
-    if mode == "umbmark":
-        return f"{record_id}_{'ccw' if p1 > 0 else 'cw'}_L{p2}"
+    """Parameters in the samples file name of a recorded run."""
+    if mode == "path":
+        return f"{record_id}_paths{p2}"
     return f"{record_id}_{p1}_{p2}_{p3}_{p4}"
 
 
 def on_run_end(*values: int) -> None:
-    """run_end of the calibration modes; values follow RUN_END_HEADER without rx_monotonic.
+    """run_end of a recorded run; values follow RUN_END_HEADER without rx_monotonic.
 
     mode names the summary log and the samples file."""
     fields: dict[str, object] = dict(zip(RUN_END_HEADER[1:], values, strict=True))
@@ -84,6 +106,8 @@ def on_run_end(*values: int) -> None:
     fields["reason"] = END_REASONS.get(values[4], values[4])
     fields.pop("mode")
     event(f"{mode}_end", " ".join(f"{k}={v}" for k, v in fields.items() if k != "t_ms"))
+    for listener in run_end_listeners:
+        listener(values[5], values[4])  # p1 = last path_id
 
 
 def on_emergency(t_ms: int, peak: int, untouched: int) -> None:

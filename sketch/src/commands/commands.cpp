@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "../config/config.h"
 #include "../modes/modes.h"
+#include "../pose/pose.h"
 
 using namespace config;
 
@@ -10,14 +11,16 @@ namespace commands
 {
     enum CommandType : int32_t
     {
-        CMD_SET_PATH = 1, // args: id, number of values
-        CMD_MODE = 2,     // args: code, p1..p4
+        CMD_SET_PATH = 1,   // args: id, number of values
+        CMD_STOP = 2,       // no args
+        CMD_RESET_POSE = 3, // args: x_mm, y_mm, theta_mrad
+        CMD_END_RUN = 4,    // no args
     };
 
     struct Command
     {
         int32_t type;
-        int32_t args[1 + modes::kParams];
+        int32_t args[3];
     };
 
     constexpr int kQueueLength = 8;
@@ -28,10 +31,6 @@ namespace commands
     static int32_t staged_path_id;
     static int32_t staged_path_len;
     static int32_t staged_path_mm[2 * kMaxWaypoints]; // X & Y
-
-    static int32_t applied_path_id;
-    static int32_t path_len;
-    static int32_t path_mm[2 * kMaxWaypoints];
 
     void begin()
     {
@@ -60,33 +59,48 @@ namespace commands
         return k_msgq_put(&cmd_queue, &cmd, K_NO_WAIT) == 0;
     }
 
-    bool queue_mode(int32_t code, const int32_t params[modes::kParams])
+    bool queue_stop()
     {
-        Command cmd{CMD_MODE, {code}};
-        
-        for (int i = 0; i < modes::kParams; i++)
-        {
-            cmd.args[1 + i] = params[i];
-        }
+        const Command cmd{CMD_STOP, {}};
         
         return k_msgq_put(&cmd_queue, &cmd, K_NO_WAIT) == 0;
     }
 
+    bool queue_end_run()
+    {
+        const Command cmd{CMD_END_RUN, {}};
+        
+        return k_msgq_put(&cmd_queue, &cmd, K_NO_WAIT) == 0;
+    }
+
+    bool queue_reset_pose(int32_t x_mm, int32_t y_mm, int32_t theta_mrad)
+    {
+        const Command cmd{CMD_RESET_POSE, {x_mm, y_mm, theta_mrad}};
+        
+        return k_msgq_put(&cmd_queue, &cmd, K_NO_WAIT) == 0;
+    }
+
+    // A newer set_path that overwrote the staged path makes this command stale.
     static void apply_set_path(const Command &cmd)
     {
         k_mutex_lock(&staged_path_mutex, K_FOREVER);
         
         if (staged_path_id == cmd.args[0] && staged_path_len == cmd.args[1])
         {
-            applied_path_id = staged_path_id;
-            path_len = staged_path_len;
-            for (int32_t i = 0; i < path_len; i++) 
-            {
-                path_mm[i] = staged_path_mm[i];
-            }
+            modes::start_path(staged_path_id, staged_path_mm, staged_path_len / 2);
         }
         
         k_mutex_unlock(&staged_path_mutex);
+    }
+
+    // Only with no run open: it would shift every absolute target, and break the run's odometry
+    // check.
+    static void apply_reset_pose(const Command &cmd)
+    {
+        if (modes::still())
+        {
+            pose::set(cmd.args[0] * 0.001, cmd.args[1] * 0.001, cmd.args[2] * 0.001);
+        }
     }
 
     void drain()
@@ -100,15 +114,16 @@ namespace commands
                 case CMD_SET_PATH:
                     apply_set_path(cmd);
                     break;
-                case CMD_MODE:
-                    modes::request(cmd.args[0], &cmd.args[1]);
+                case CMD_STOP:
+                    modes::stop();
+                    break;
+                case CMD_END_RUN:
+                    modes::end_run();
+                    break;
+                case CMD_RESET_POSE:
+                    apply_reset_pose(cmd);
                     break;
             }
         }
-    }
-
-    int32_t path_id()
-    {
-        return applied_path_id;
     }
 }

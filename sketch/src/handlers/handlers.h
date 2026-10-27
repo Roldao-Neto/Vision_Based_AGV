@@ -6,7 +6,8 @@
 namespace handlers
 { 
     // Called once from setup(), after Bridge.begin(): remembers the main thread (setup()
-    // runs on it) and registers ping, hb, set_path and mode with provide_safe.
+    // runs on it) and registers ping, hb, set_path, reset_pose, stop and mode with
+    // provide_safe.
     void begin();
     
     // The bridge thread, or nullptr until a handler has run off the main thread.

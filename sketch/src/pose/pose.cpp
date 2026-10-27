@@ -29,6 +29,13 @@ namespace pose
         last_count[config::kRight] = count[config::kRight];
     }
     
+    void set(double x, double y, double theta)
+    {
+        state.x = x;
+        state.y = y;
+        state.theta = theta;
+    }
+    
     const odometry::State &get()
     {
         return state;

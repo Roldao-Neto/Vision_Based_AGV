@@ -31,6 +31,20 @@ static void tick(uint32_t now_us)
     modes::tick();
     samples::tick();
 
+    if (tick_count % kPoseEveryTicks == 0) {
+        const odometry::State &p = pose::get();
+        Bridge.notify(
+            "pose",
+            millis(),
+            (float)p.x,
+            (float)p.y,
+            (float)p.theta,
+            modes::phase(),
+            modes::path_id(),
+            modes::wp_idx()
+        );
+    }
+
     if (tick_count % kReportEveryTicks == 0) {
         const uint32_t now_ms = millis();
         bridge_stack::report_emergency_once(now_ms);
@@ -47,7 +61,7 @@ static void tick(uint32_t now_us)
             bridge_stack::peak(),
             bridge_stack::untouched(),
             hb_ms == 0 ? -1 : (int32_t)(now_ms - hb_ms),
-            commands::path_id(),
+            modes::path_id(),
             (int32_t)bridge_stack::emergency(),
             motor_driver::pwm_hz(),
             motor_driver::pwm_error(),

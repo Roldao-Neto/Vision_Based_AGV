@@ -1,26 +1,22 @@
 import threading
+from collections.abc import Callable, Iterator
 
 from flask import Flask, Response
 
 
 class Server:
-    def __init__(self, port = 8888):
+    def __init__(self, port: int = 8888):
         self.port = port
+        self.app = Flask(__name__)
 
-    def start_simple_video(self, video_function, width = '100%'):
+    def video(self, video_function: Callable[[], Iterator[bytes]], route: str = "/video_feed") -> None:
+        self.app.add_url_rule(
+            route, "video_feed",
+            lambda: Response(video_function(), mimetype="multipart/x-mixed-replace; boundary=frame"),
+        )
 
-        if(video_function is None):
-            raise RuntimeError("No Video Function Detected to Stream in start_simple_video")
-
-        app = Flask(__name__)
-
-        # Expects a function that yields frames
-        @app.route('/video_feed')
-        def video_feed():
-            return Response(video_function(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-        @app.route('/')
-        def index():
-            return f"<img src='/video_feed' style='width:{width}'>"
-
-        threading.Thread(target=lambda: app.run(host='0.0.0.0', port=self.port, threaded=True, use_reloader=False),daemon=True).start()
+    def start(self) -> None:
+        threading.Thread(
+            target=lambda: self.app.run(host="0.0.0.0", port=self.port, threaded=True, use_reloader=False),
+            name="flask", daemon=True,
+        ).start()

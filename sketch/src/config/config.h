@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "../encoder_guard/encoder_guard.h"
-#include "../heading_pi/heading_pi.h"
+#include "../follower/follower.h"
 #include "../odometry/odometry.h"
 #include "../wheel_pi/wheel_pi.h"
 
@@ -34,7 +34,7 @@ namespace config
     constexpr bool kRightEncReversed = true;
 
     // Paths: 1 to 32 absolute axle waypoints in integer mm
-    constexpr int kMaxWaypoints = 32;
+    constexpr int kMaxWaypoints = follower::kMaxWaypoints;
     constexpr int32_t kArenaXMm = 2000;
     constexpr int32_t kArenaYMm = 1500;
 
@@ -58,6 +58,7 @@ namespace config
     // Control tick
     constexpr uint32_t kTickPeriodUs = 20000;
     constexpr uint32_t kReportEveryTicks = 25; // status every 500 ms
+    constexpr uint32_t kPoseEveryTicks = 2;    // pose at 25 Hz
 
     // Encoder guard (closed loop): |duty| >= 20 % for 10 ticks (200 ms) without a count ends the mode at once, coasting
     constexpr encoder_guard::Config kEncoderGuard = {0.2f, 10};
@@ -65,8 +66,7 @@ namespace config
     constexpr float kSpeedTcl = 0.1f;         // s, closed-loop time constant
     constexpr float kSpeedMaxDuty = 0.5f;     // closed-loop duty limit
     constexpr float kSpeedMinMps = 0.005f;    // below it the w coasts ("a few mm/s")
-    constexpr float kStopDecelMps2 = 0.5f;    // every planned stop
-    constexpr float kAccelMps2 = 0.5f;        // speed ramps of umbmark
+    constexpr float kStopDecelMps2 = 0.5f;    // speed ramps and every planned stop
 
     // K in counts/s per unit duty, tau in s, pwm0 = start of sustained motion on the ramp.
     constexpr wheel_pi::Model kLeftFwd = {7160.4f, 0.15362f, 0.074f};
@@ -91,17 +91,25 @@ namespace config
         (float)((double)kSpeedMinMps / kOdometry.m_per_count[kRight])
     };
 
-    // Heading PI for driving straight (Day 2, docs/logs/day2-firmware.md, item 2): Kp 1/s, Ti s,
-    // Kd 0, steering limit rad/s
-    constexpr heading_pi::Config kHeadingPi = {2.3f, 1.0f, 0.5f};
+    constexpr uint32_t kStoppedTicks = 2; // ticks without a count on either wheel = stopped
 
-    // Ends of the moving modes
-    constexpr float kSteerStopM = 0.015f;              // below it, steering holds and v only ramps down
-    constexpr float kHeadingStopRad = 0.05235988f;     // 3°, the same for the rotations
-    constexpr uint32_t kStoppedTicks = 2;              // ticks without a count on either wheel = stopped
-    constexpr float kLegOvershootM = 0.1f;             // past a leg's end by this much: ramped stop
+    // Point-to-point controller (docs/logs/day3-firmware.md). The heading PI is the Day 2 design
+    // (docs/logs/day2-firmware.md, item 2): Kp 1/s, Ti s, steering limit rad/s. Turns go up to
+    // 90°/s at α = 2a/b, so each wheel also accelerates and brakes at a.
+    constexpr follower::Config kFollower = {
+        0.25f,                                             // cruise, m/s
+        kStopDecelMps2,                                    // accel, m/s²
+        1.5707963f,                                        // turn_max, rad/s
+        (float)(2.0 * (double)kStopDecelMps2 / kTrackM),   // turn_accel, rad/s²
+        0.015f,                                            // steer_stop, m
+        0.05235988f,                                       // heading_stop, 3°
+        0.10f,                                             // freeze, m
+        0.5235988f,                                        // realign, 30°
+        {2.3f, 1.0f, 0.5f},                                // heading PI
+    };
 
-    // In-place turns: up to 90°/s at α = 2a/b, so each wheel also accelerates and brakes at a
-    constexpr float kTurnMaxRadS = 1.5707963f;
-    constexpr float kTurnAccelRadS2 = (float)(2.0 * (double)kStopDecelMps2 / kTrackM);
+    // No hb for this long brakes the robot and ends the path
+    constexpr uint32_t kHeartbeatTimeoutMs = 1000;
+    // reset_pose: |θ| ≤ π
+    constexpr int32_t kMaxThetaMrad = 3142;
 }
