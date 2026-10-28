@@ -23,7 +23,7 @@ dev = [
 arduino-app-bricks = { git = "https://github.com/arduino/app-bricks-py", tag = "release/0.12.0" }
 
 [tool.pytest.ini_options]
-pythonpath = ["python", "analysis"]
+pythonpath = ["python", "analysis", "bricks"]
 testpaths = ["tests"]
 
 [tool.basedpyright]

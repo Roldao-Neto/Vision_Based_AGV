@@ -124,6 +124,7 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 ## Day 4 — Dataset day + offline planner
 
 **Bench (most of the day)**
+- [ ] Capture tool in the app (`python/capture.py` + the Capture button on the mission page): the dataset frames come from the code path inference uses on Day 5, downloaded as lossless `im_N.png` (1280 × 720) to the PC, nothing written on the board; removed from the page after the dataset.
 - [ ] Capture the dataset on the MDF arena with the mounted camera: all obstacle classes, 0.15–1.0 m, varied angles and positions, several lighting conditions, background-only frames.
 - [ ] Before training, choose the impulse's resize mode and record it with the resulting horizontal FOV in the README. Recommended: "Fit shortest axis" for resolution, which gives ~43° instead of ~70°.
 - [ ] Label and train in Edge Impulse (YOLO-Pro); export the Linux `.eim` (aarch64), put it in `models/` on the PC and `chmod +x` it.
@@ -155,15 +156,14 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 ## Day 5 — Detector on the robot + distance calibration
 
 **Linux**
-- [ ] Rebuild the capture in `python/main.py` (the earlier version is in commit `b34ea46`) as two threads:
-  - capture thread: reads every frame and keeps only the latest (frame, timestamp) pair, with the V4L2 timestamp checked on the board; a failure in `cam.open()` or `cam.read()` is logged instead of silently killing the thread;
+- [ ] Capture and inference as two threads:
+  - capture thread (`python/capture.py`, built on Day 4 for the dataset): reads every frame and keeps only the latest (frame, timestamp) pair; a failure in `cam.open()` or `cam.read()` is logged as `camera_error`. Still to do: check the V4L2 timestamp on the board;
   - inference thread, on the latest pair: `pyaudio` stub, BGR → RGB, `get_features_from_image_auto_studio_settings`; map each bbox back to 1280 × 720 with the inverse of the resize mode;
   - draw bboxes on the BGR frame in the Flask stream, encoded at ~640 × 360 and ≤ 10 fps so it does not compete with inference for CPU.
 - [ ] Method (b): floor homography from 8–12 tape marks measured in the robot frame (axle origin). It also gives the **bearing**, measured from the camera, used by both methods.
 - [ ] Method (a): `Z = k/h` with one k per class, the depth along the optical axis, combined with the bearing, Camera. Fit k against the camera → front-face depth (axle → front face − 0.17 m).
 - [ ] Obstacle position = front face F + depth/2 along the bearing, i.e. the footprint center.
 - [ ] Filters: drop detections beyond d_max (start at 0.7 m of depth Z), bboxes touching the image bottom (full-frame coordinates) and positions outside the arena; require 3 consecutive frames.
-- [ ] `Camera.open()` only enforces focus; make it also fail when zoom (and exposure / white balance) do not stick, since a wrong zoom silently invalidates the homography and the k/h fits.
 
 **Bench**
 - [ ] Each class at 0.3–1.0 m every 10 cm, centered and to each side, 20 detections per position (mean and standard deviation) → error versus distance for (a) and (b). Tape from the axle to the obstacle's front face, plus the lateral offset.
