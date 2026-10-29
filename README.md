@@ -18,7 +18,7 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 ## Architecture
 
 - **STM32U585 (real time):** encoders, PI speed control per wheel, odometry, heading control, point-to-point waypoint following.
-- **Linux (QRB2210):** camera, Edge Impulse obstacle detector, obstacle distance estimation, occupancy grid, Dijkstra path planning, mission manager, web UI.
+- **Linux (QRB2210):** camera, Edge Impulse obstacle detector, obstacle distance estimation, occupancy grid, A* path planning, mission manager, web UI.
 - **Bridge:**
 
 | Direction | Message | What it does |

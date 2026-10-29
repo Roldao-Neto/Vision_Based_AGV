@@ -1,11 +1,8 @@
-"""The mission page: Start / Stop buttons, the live pose on the arena and the camera preview
-with the detector's boxes.
+"""The mission page: Start / Stop buttons, the live pose on the arena with the planner's grid
+and obstacles, and the camera preview with the detector's boxes.
 
 Routes only read the mission's snapshot or the latest camera frame, or post an event to the
 mission; they never call the Bridge.
-
-The Capture button and /snapshot.png are only for the Day 4 dataset, never used during a
-run, and are removed later.
 """
 
 import time
@@ -14,7 +11,7 @@ from collections.abc import Iterator
 import cv2
 from capture import Capture
 from detector import Detector
-from flask import Flask, Response, jsonify, request
+from flask import Flask, jsonify
 from mission import Mission
 
 PREVIEW_SIZE = (640, 360)
@@ -36,7 +33,6 @@ PAGE = """<!doctype html>
   canvas { width: 100%; max-width: 800px; background: white; border: 1px solid #999; display: block; }
   pre { font-size: 0.95rem; }
   #preview { width: 100%; max-width: 800px; aspect-ratio: 16 / 9; background: #333; display: block; }
-  #n { width: 5rem; font-size: 1.1rem; }
 </style>
 </head>
 <body>
@@ -49,8 +45,6 @@ PAGE = """<!doctype html>
 </div>
 <div>
 <img id="preview" src="/video_feed" alt="camera preview">
-<p><button id="capture">Capture</button> next: im_<input id="n" type="number" min="1" value="1">.png</p>
-<pre id="shot"></pre>
 </div>
 </div>
 <script>
@@ -69,8 +63,33 @@ function dot(x, y, r, color) {
   ctx.fillStyle = color; ctx.beginPath(); ctx.arc(u, v, r, 0, 2 * Math.PI); ctx.fill();
 }
 
+function circle(x, y, r, color, dash) {
+  const [u, v] = px(x, y);
+  ctx.strokeStyle = color; ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(u, v, r * s, 0, 2 * Math.PI);
+  ctx.stroke(); ctx.setLineDash([]);
+}
+
+// Planner grid (axle coordinates): occupied cells shaded, then the cell lines
+function drawGrid(st) {
+  const c = st.cell * s;
+  ctx.fillStyle = "#ddd";
+  st.grid.forEach((row, iy) => [...row].forEach((ch, ix) => {
+    if (ch === "#") { const [u, v] = px(ix * st.cell, (iy + 1) * st.cell); ctx.fillRect(u, v, c, c); }
+  }));
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.08)"; ctx.beginPath();
+  for (let u = 0; u <= cv.width; u += c) { ctx.moveTo(u, 0); ctx.lineTo(u, cv.height); }
+  for (let v = cv.height; v >= 0; v -= c) { ctx.moveTo(0, v); ctx.lineTo(cv.width, v); }
+  ctx.stroke();
+  st.obstacles.forEach(o => {
+    circle(o.x, o.y, o.r_plan, "#c62828", [4, 4]);  // planning inflation
+    circle(o.x, o.y, o.r_block, "#c62828", []);     // blocked check, without the margin
+    dot(o.x, o.y, 4, "#c62828");
+  });
+}
+
 function draw(st) {
   ctx.clearRect(0, 0, cv.width, cv.height);
+  drawGrid(st);
   dot(0.248, 0.745, 6, "#1565c0");   // A (center)
   dot(1.651, 0.745, 6, "#2e7d32");   // B (center)
   if (st.path.length > 1) {
@@ -102,29 +121,6 @@ function refresh() {
 }
 setInterval(refresh, 200);
 refresh();
-
-// Dataset capture (Day 4): the full 1280 x 720 frame as PNG, downloaded as im_N.png
-const nIn = document.getElementById("n"), shot = document.getElementById("shot");
-fetch("/snapshot/next").then(r => r.json()).then(j => { nIn.value = j.next; }).catch(() => {});
-document.getElementById("capture").onclick = async (ev) => {
-  const btn = ev.target, n = parseInt(nIn.value);
-  btn.disabled = true;
-  try {
-    const r = await fetch(`/snapshot.png?n=${n}`, {cache: "no-store"});
-    if (!r.ok) { shot.textContent = `capture failed: ${r.status} ${await r.text()}`; return; }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(await r.blob());
-    a.download = `im_${n}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    nIn.value = n + 1;
-    shot.textContent = `saved im_${n}.png`;
-  } catch (e) {
-    shot.textContent = `capture failed: ${e}`;
-  } finally {
-    btn.disabled = false;
-  }
-};
 </script>
 </body>
 </html>
@@ -150,7 +146,7 @@ def preview(capture: Capture, detector: Detector) -> Iterator[bytes]:
             yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpg.tobytes() + b"\r\n"
 
 
-def register(app: Flask, mission: Mission, capture: Capture) -> None:
+def register(app: Flask, mission: Mission) -> None:
     app.add_url_rule("/", "index", lambda: PAGE)
     app.add_url_rule("/state", "state", lambda: jsonify(mission.snapshot()))
 
@@ -164,25 +160,3 @@ def register(app: Flask, mission: Mission, capture: Capture) -> None:
 
     app.add_url_rule("/start", "start", start, methods=["POST"])
     app.add_url_rule("/stop", "stop", stop, methods=["POST"])
-
-    next_n = 1  # in memory: after an app restart the page sets where to continue
-
-    def snapshot():
-        """The latest full frame as PNG (lossless: exactly the decoded frame inference sees),
-        as a download named im_N.png; N is ?n= from the page, or the board's count."""
-        nonlocal next_n
-        latest = capture.latest()
-        if latest is None:
-            return ("no camera frame yet", 503)
-        ok, png = cv2.imencode(".png", latest[0])
-        if not ok:
-            return ("PNG encoding failed", 500)
-        n = request.args.get("n", next_n, type=int)
-        next_n = n + 1
-        return Response(png.tobytes(), mimetype="image/png", headers={
-            "Content-Disposition": f"attachment; filename=im_{n}.png",
-            "Cache-Control": "no-store",
-        })
-
-    app.add_url_rule("/snapshot.png", "snapshot", snapshot)
-    app.add_url_rule("/snapshot/next", "snapshot_next", lambda: jsonify(next=next_n))

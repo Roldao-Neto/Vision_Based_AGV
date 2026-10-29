@@ -21,6 +21,7 @@ from arena import (
     to_mm,
 )
 from mcu_commands import END_REASONS, IDLE
+from planner import CELL_M, MARGIN_M, Obstacle, build_grid
 
 ARRIVED = 3  # follower phase in the pose notification
 END_TARGET = 6
@@ -58,6 +59,8 @@ class Mission:
         self.path_id = 0
         self.path: list[Point] = []
         self._started = 0.0
+        self.obstacles: list[Obstacle] = []  # discovered during a run, from Day 6
+        self.grid = build_grid(self.obstacles)
 
     # Any thread
 
@@ -72,7 +75,8 @@ class Mission:
         self._run_ends.put((path_id, reason))
 
     def snapshot(self) -> dict[str, object]:
-        """For the UI: the axle pose, and the robot center it is drawn around."""
+        """For the UI: the axle pose, and the robot center it is drawn around; the grid as one
+        string per row from y = 0 ("#" occupied), and each obstacle's two inflated radii."""
         with self._lock:
             pose = self._pose
             state: dict[str, object] = {
@@ -80,6 +84,10 @@ class Mission:
                 "path_id": self.path_id,
                 "path": [list(START_AXLE), *map(list, self.path)],
                 "pose": None,
+                "cell": CELL_M,
+                "grid": ["".join("#" if c else "." for c in row) for row in self.grid],
+                "obstacles": [{"label": o.label, "x": o.x, "y": o.y, "r_plan": o.radius(MARGIN_M),
+                               "r_block": o.radius(0.0)} for o in self.obstacles],
             }
         if pose is not None:
             cx, cy = axle_to_center(pose.x, pose.y, pose.theta)

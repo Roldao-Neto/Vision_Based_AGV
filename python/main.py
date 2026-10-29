@@ -43,7 +43,7 @@ detector = Detector(capture, event)
 detector.start()
 
 server = Server()
-register(server.app, mission, capture)
+register(server.app, mission)
 server.video(lambda: preview(capture, detector))
 server.start()
 

@@ -124,7 +124,7 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 ## Day 4 — Dataset day + offline planner
 
 **Bench (most of the day)**
-- [x] Capture tool in the app (`python/capture.py` + the Capture button on the mission page): the dataset frames come from the code path inference uses on Day 5, downloaded as lossless `im_N.png` (1280 × 720) to the PC, nothing written on the board; removed from the page after the dataset (saved in a tag and branch just like the other saved tags, but not as day4final -> instead, we will go with day4 dataset collection).
+- [x] Capture tool in the app (`python/capture.py` + the Capture button on the mission page): the dataset frames come from the code path inference uses on Day 5, downloaded as lossless `im_N.png` (1280 × 720) to the PC, nothing written on the board; removed from the page after the dataset (saved in a tag and branch just like the other saved tags, but not as day4final -> instead, we will go with day4 dataset collection). Removed from `main` at the end of Day 4 (branch `day4_dataset_collection`, tag `day4-dataset-collection-final`).
 - [x] Capture the dataset on the MDF arena with the mounted camera: all obstacle classes, 0.15–1.0 m, varied angles and positions, several lighting conditions, background-only frames. (Captured only the box and background classes in this first moment, the other classes will be taken after one class only works)
 - [x] Before training, choose the impulse's resize mode and record it with the resulting horizontal FOV in the README: "Squash".
 - [x] Label and train in Edge Impulse (YOLO-Pro); export the Linux `.eim` (aarch64), put it in `models/` on the PC and `chmod +x` it.
@@ -132,17 +132,19 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
   - record the inference FPS, including the conversion, the resize and the decoding. This de-risks Day 5.
 - [x] Measure each obstacle class: width, depth and height. With Squash, check the narrowest class at d_max in model-input pixels (≈ W·907/Z · S/1280 for a width W at depth Z and an S-wide input). Box (the only class so far): 80.2 × 80.2 × 75.2 mm (h), ~13 × 22 model px at 0.7 m, circumscribed radius 56.7 mm.
 
-**PC (in parallel while training runs)**
-- [ ] Occupancy grid 5 cm (40 × 30 cells), in axle coordinates.
-- [ ] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin), except the wall behind A (x = 0), which is not inflated (decided by Rolds in the Day 3 review, so the start cell is free); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner). Free axle corridor: x ≤ 1.754, y ∈ [0.246, 1.254]. Paths never cross inflated cells (no escape rule): no path fails the run.
-- [ ] Dijkstra, 8 neighbours (diagonal cost √2), no corner cutting.
-- [ ] Line-of-sight path simplification on the inflated grid.
-- [ ] Detection association: same class within ~20 cm = same obstacle (average its position). The radius is a parameter, revisited on Day 5.
-- [ ] "Path blocked?" check, with hysteresis:
+**PC (in parallel while training runs)** (details in `docs/logs/day4-pc.md`; `python/planner.py`)
+- [x] 5 cm cells; a cell is occupied if any part of it is inside an inflation; the grid is only for the search, while simplification and the blocked check use exact segment-to-obstacle distances; A* instead of Dijkstra (the committee-approved plan).
+- [x] Occupancy grid 5 cm (40 × 30 cells), in axle coordinates: 700 free cells with no obstacle (x 0–1.75, y 0.25–1.25); a box on the A→B line leaves 3 free rows below it (15 cm of the real 19.6 cm).
+- [x] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin), except the wall behind A (x = 0), which is not inflated (decided by Rolds in the Day 3 review, so the start cell is free); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner, box 30.3 cm). Free axle corridor: x ≤ 1.754, y ∈ [0.246, 1.254]. Paths never enter an inflation (no escape rule): no path fails the run. The grid closes gaps between inflations narrower than 6–10 cm aligned with the axes and ~14 cm diagonally (2.5 cm cells: 3–5 and 7 cm).
+- [x] A*, 8 neighbours (diagonal cost √2), no corner cutting, octile heuristic: the same cost as Dijkstra on 50 random layouts; `plan()` with one box in 0.7 ms on the PC.
+- [x] Line-of-sight path simplification with exact geometry (segment in the wall corridor and outside every planning inflation): with a box at (0.90, 0.745), 2 waypoints and 1.649 m (the raw cell path is 1.795 m), 1.3 mm from the inflation; with no obstacle, `[1581, 745]` as on Day 3.
+- [x] Detection association: same class within ~20 cm = same obstacle (mean of its detections). The radius is a parameter, revisited on Day 5.
+- [x] "Path blocked?" check, with hysteresis:
   - plan with the full inflation (24.6 cm + footprint radius);
   - the remaining path is blocked only if it enters the inflation without the 3 cm margin (21.6 cm + footprint radius);
   - run the check for new obstacles and for position updates;
-  - check that a 1–2 cm shift of a known obstacle does not trigger a replan.
+  - check that a 1–2 cm shift of a known obstacle does not trigger a replan: shifts of 10, 20, 29 and 31 mm in 16 directions never block; 40 mm toward the path does.
+- [x] Mission page: the arena shows the planner grid (occupied cells shaded) and each obstacle's two inflations (`Mission.obstacles`, empty until Day 6); checked on the PC, and on the board `/state` carries the grid (500 occupied cells, no obstacle).
 
 **README:** start *Obstacle detection*: classes, obstacle dimensions, dataset size, model.
 
@@ -182,9 +184,9 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 - [ ] Ignore detections while the pose state is ROTATE: a timing error of 30–60 ms between a frame and its pose is ~3–5° of bearing at 90 °/s (~3–7 cm at 0.7 m).
 - [ ] Association → grid update → if the path is blocked (with the Day 4 hysteresis), the mission thread:
   - sends a ramped `stop` and waits for a `pose` with the robot stopped (the ramp takes ~0.5 s and ~6 cm, more than one cell);
-  - replans from that pose (Dijkstra + simplification), sends the new `set_path` with a new `path_id`, and resumes.
+  - replans from that pose (A* + simplification), sends the new `set_path` with a new `path_id`, and resumes.
   Path progress and ARRIVED from `pose` messages that still carry the old `path_id` are ignored. Their position is still used.
-- [ ] Flask: draw grid, inflated obstacles, current path and pose.
+- [ ] Flask: the grid, inflated obstacles, current path and pose (grid and obstacles drawn since Day 4): fill `Mission.obstacles` and rebuild `Mission.grid`.
 - [ ] Log detections (bbox, class, distance by (a) and (b)), obstacle list, every replan.
 - [ ] Debug on an S1 layout, then on S2 layouts.
 
@@ -224,5 +226,4 @@ Per run:
 ## Day 8 — Slack
 
 Reserved for slips. Only if everything is done:
-- Swap Dijkstra for A* and compare.
 - PyTorch detector instead of Edge Impulse.

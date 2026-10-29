@@ -1,5 +1,7 @@
 # Dia 4 — Bancada: captura do dataset
 
+> **Arquivo:** o código e os dados deste dia estão no branch `day4` (tag `day4-final`), com os dados em `results/day4/`; a ferramenta de captura, removida no fim do dia, está no branch `day4_dataset_collection` (tag `day4-dataset-collection-final`). No `main`, `data/day4/` não é versionado.
+
 ## 1. Ferramenta de captura dentro do app
 
 As imagens do dataset saem do mesmo caminho de código que a inferência usa: a mesma câmera, as mesmas configurações automáticas de imagem, 1280 × 720 em MJPG e a mesma decodificação do OpenCV. `Camera.open()` só abre a câmera e fixa o formato; exposição, balanço de branco e foco ficam automáticos.
@@ -65,6 +67,8 @@ Dataset: 449 imagens, 166 com a caixa e 283 só de fundo; 352 de treino (71 dela
 | Recall | 0,783 | 0,829 |
 | mAP das caixas pequenas (distantes) | 0,671 | 0,754 |
 
-## Apêndice — versões finais dos arquivos
+## 7. Remoção da ferramenta de captura
 
-*Preenchido ao fim do bloco.*
+### O que foi feito e por quê
+
+Com o dataset da caixa capturado, o botão Capture e as rotas `/snapshot.png` e `/snapshot/next` saíram da página no fim do Dia 4. A ferramenta fica no branch `day4_dataset_collection` (tag `day4-dataset-collection-final`).
