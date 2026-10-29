@@ -35,8 +35,7 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 | `sketch/` | STM32 firmware (Arduino sketch, Zephyr core) |
 | `python/` | Linux application |
 | `bricks/` | Local App bricks: camera handler and Flask video UI |
-| `models/` | Edge Impulse `.eim` model (not versioned) |
-| `tests/` | Python tests and native C++ tests of the pure firmware modules |
+| `models/` | Edge Impulse model as a float32 `.tflite` (not versioned) |
 | `analysis/` | PC-only analysis scripts; they read `data/<day>/` and write `data/<day>/plots/` |
 | `docs/` | Roadmap, wiring diagram, development logs |
 
@@ -44,11 +43,10 @@ Wiring: [`docs/diagrama-ligacoes.svg`](docs/diagrama-ligacoes.svg).
 
 Everything is edited on the PC and deployed to the board over Wi-Fi. The board compiles and flashes the sketch itself when the app starts.
 
-**PC.** Requirements: [uv](https://docs.astral.sh/uv/), `ssh`, `rsync` and, for the native C++ tests, `g++`.
+**PC.** Requirements: [uv](https://docs.astral.sh/uv/), `ssh` and `rsync`.
 
 ```bash
 uv sync
-uv run pytest
 uvx basedpyright python bricks
 ```
 
@@ -91,7 +89,7 @@ Each app start writes a set of CSV files with unique names to `/app/logs/` on th
 | `*_path.csv`, `*_path_<record>_paths<n>.csv` | one row per run, and each run's samples (one per 20 ms tick) |
 
 ```bash
-./deploy.sh pull day3     # stop the app and move the board's logs into data/day3/
+./deploy.sh pull dayX     # stop the app and move the board's logs into data/dayX/
 ```
 
 `pull` resets the STM32, so pull only between runs. Files already in `data/<day>/` are never overwritten.
@@ -111,7 +109,15 @@ Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm; stra
 
 ## Obstacle detection
 
-_To be written on Days 4–5: classes and dataset, model, distance method and its error._
+- **Resize mode:** "Squash". The whole 1280 × 720 frame is resized to the model input, so the detector sees the camera's full horizontal FOV.
+
+- **Classes:** 
+  - `box`, a red cube 80.2 × 80.2 mm at the base and 75.2 mm high.
+  - **TODO**
+
+- **Model:** Edge Impulse YOLO-Pro, 160 × 160 RGB, run as a float32 TFLite network with LiteRT on the board, ~5 inferences/s.
+
+- **Interim model (box only, plus background images):** 449 images, 166 with the box and 283 of background only; 352 for training (71 of them for validation) and 97 for testing. On the test set: mAP@[IoU=50] 1.000, mAP@[IoU=0.50:0.95] 0.804, recall 0.829; small (distant) boxes are the weakest, mAP 0.754. These figures will be replaced by those of the final model with all classes.
 
 ## Results
 

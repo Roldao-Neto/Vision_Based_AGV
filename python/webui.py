@@ -1,4 +1,5 @@
-"""The mission page: Start / Stop buttons, the live pose on the arena and the camera preview.
+"""The mission page: Start / Stop buttons, the live pose on the arena and the camera preview
+with the detector's boxes.
 
 Routes only read the mission's snapshot or the latest camera frame, or post an event to the
 mission; they never call the Bridge.
@@ -12,6 +13,7 @@ from collections.abc import Iterator
 
 import cv2
 from capture import Capture
+from detector import Detector
 from flask import Flask, Response, jsonify, request
 from mission import Mission
 
@@ -29,21 +31,28 @@ PAGE = """<!doctype html>
   button { font-size: 1.1rem; padding: 0.5rem 1.5rem; margin-right: 0.5rem; }
   #start { background: #2e7d32; color: white; border: 0; }
   #stop { background: #c62828; color: white; border: 0; }
-  canvas { width: 100%; max-width: 800px; background: white; border: 1px solid #999; display: block; margin-top: 1rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin-top: 1rem; }
+  .row > div { flex: 1 1 400px; min-width: 0; }
+  canvas { width: 100%; max-width: 800px; background: white; border: 1px solid #999; display: block; }
   pre { font-size: 0.95rem; }
-  #preview { width: 100%; max-width: 640px; aspect-ratio: 16 / 9; background: #333; display: block; margin-top: 1rem; }
+  #preview { width: 100%; max-width: 800px; aspect-ratio: 16 / 9; background: #333; display: block; }
   #n { width: 5rem; font-size: 1.1rem; }
 </style>
 </head>
 <body>
 <h1>AGV mission: A &rarr; B</h1>
 <button id="start">Start</button><button id="stop">Stop</button>
+<div class="row">
+<div>
 <canvas id="arena" width="800" height="600"></canvas>
 <pre id="info">waiting for the first pose...</pre>
-<h2>Camera</h2>
+</div>
+<div>
 <img id="preview" src="/video_feed" alt="camera preview">
 <p><button id="capture">Capture</button> next: im_<input id="n" type="number" min="1" value="1">.png</p>
 <pre id="shot"></pre>
+</div>
+</div>
 <script>
 const W = 2.0, H = 1.5;
 const STATES = ["IDLE", "ROTATE", "DRIVE", "ARRIVED"];
@@ -122,14 +131,20 @@ document.getElementById("capture").onclick = async (ev) => {
 """
 
 
-def preview(capture: Capture) -> Iterator[bytes]:
-    """MJPEG parts of the latest frame at 640 x 360, for Server.video."""
+def preview(capture: Capture, detector: Detector) -> Iterator[bytes]:
+    """MJPEG parts of the latest frame at 640 x 360 with the detections, for Server.video."""
     while True:
         time.sleep(PREVIEW_PERIOD_S)
         latest = capture.latest()
         if latest is None:
             continue
         small = cv2.resize(latest[0], PREVIEW_SIZE, interpolation=cv2.INTER_AREA)
+        s = PREVIEW_SIZE[0] / 1280
+        for b in detector.boxes():
+            p0, p1 = (round(b.x0 * s), round(b.y0 * s)), (round(b.x1 * s), round(b.y1 * s))
+            cv2.rectangle(small, p0, p1, (0, 0, 255), 2)
+            cv2.putText(small, f"{b.label} {b.score:.2f}", (p0[0], max(p0[1] - 5, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         ok, jpg = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])
         if ok:
             yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpg.tobytes() + b"\r\n"

@@ -124,17 +124,15 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 ## Day 4 — Dataset day + offline planner
 
 **Bench (most of the day)**
-- [ ] Capture tool in the app (`python/capture.py` + the Capture button on the mission page): the dataset frames come from the code path inference uses on Day 5, downloaded as lossless `im_N.png` (1280 × 720) to the PC, nothing written on the board; removed from the page after the dataset.
-- [ ] Capture the dataset on the MDF arena with the mounted camera: all obstacle classes, 0.15–1.0 m, varied angles and positions, several lighting conditions, background-only frames.
-- [ ] Before training, choose the impulse's resize mode and record it with the resulting horizontal FOV in the README. Recommended: "Fit shortest axis" for resolution, which gives ~43° instead of ~70°.
-- [ ] Label and train in Edge Impulse (YOLO-Pro); export the Linux `.eim` (aarch64), put it in `models/` on the PC and `chmod +x` it.
-- [ ] Smoke test of the new `.eim` inside the app container (moved here from Day 1):
-  - `six` installed, `pyaudio` stubbed;
-  - import, `init()`, one `classify()` on a camera frame converted BGR → RGB;
-  - record the inference FPS, including the conversion and `get_features_from_image_auto_studio_settings`. This de-risks Day 5.
-- [ ] Measure each obstacle class: width, depth and height.
+- [x] Capture tool in the app (`python/capture.py` + the Capture button on the mission page): the dataset frames come from the code path inference uses on Day 5, downloaded as lossless `im_N.png` (1280 × 720) to the PC, nothing written on the board; removed from the page after the dataset (saved in a tag and branch just like the other saved tags, but not as day4final -> instead, we will go with day4 dataset collection).
+- [x] Capture the dataset on the MDF arena with the mounted camera: all obstacle classes, 0.15–1.0 m, varied angles and positions, several lighting conditions, background-only frames. (Captured only the box and background classes in this first moment, the other classes will be taken after one class only works)
+- [x] Before training, choose the impulse's resize mode and record it with the resulting horizontal FOV in the README: "Squash".
+- [x] Label and train in Edge Impulse (YOLO-Pro); export the Linux `.eim` (aarch64), put it in `models/` on the PC and `chmod +x` it.
+- [x] Smoke test of the new `.eim` inside the app container (moved here from Day 1): it loads and runs, but returns no boxes, also with Edge Impulse's own runner, while the network inside it, run with LiteRT, finds them; the detector runs the float32 `.tflite` with LiteRT instead (decided by Rolds on Day 4, `docs/logs/day4-bench.md`).
+  - record the inference FPS, including the conversion, the resize and the decoding. This de-risks Day 5.
+- [x] Measure each obstacle class: width, depth and height. With Squash, check the narrowest class at d_max in model-input pixels (≈ W·907/Z · S/1280 for a width W at depth Z and an S-wide input). Box (the only class so far): 80.2 × 80.2 × 75.2 mm (h), ~13 × 22 model px at 0.7 m, circumscribed radius 56.7 mm.
 
-**PC (in parallel while training runs, pytest)**
+**PC (in parallel while training runs)**
 - [ ] Occupancy grid 5 cm (40 × 30 cells), in axle coordinates.
 - [ ] Inflation: walls by 24.6 cm (21.6 cm rotation radius + 3 cm margin), except the wall behind A (x = 0), which is not inflated (decided by Rolds in the Day 3 review, so the start cell is free); obstacles by 24.6 cm + the circumscribed radius of the class footprint (center to farthest corner). Free axle corridor: x ≤ 1.754, y ∈ [0.246, 1.254]. Paths never cross inflated cells (no escape rule): no path fails the run.
 - [ ] Dijkstra, 8 neighbours (diagonal cost √2), no corner cutting.
@@ -144,11 +142,11 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
   - plan with the full inflation (24.6 cm + footprint radius);
   - the remaining path is blocked only if it enters the inflation without the 3 cm margin (21.6 cm + footprint radius);
   - run the check for new obstacles and for position updates;
-  - test that a 1–2 cm shift of a known obstacle does not trigger a replan.
+  - check that a 1–2 cm shift of a known obstacle does not trigger a replan.
 
 **README:** start *Obstacle detection*: classes, obstacle dimensions, dataset size, model.
 
-**Done when:** the model runs on the board and all planner tests pass.
+**Done when:** the model runs on the board and the planner checks above hold on the PC.
 **Record:** dataset size per class, model metrics, obstacle dimensions, inference FPS from the smoke test.
 
 ---
@@ -158,7 +156,7 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 **Linux**
 - [ ] Capture and inference as two threads:
   - capture thread (`python/capture.py`, built on Day 4 for the dataset): reads every frame and keeps only the latest (frame, timestamp) pair; a failure in `cam.open()` or `cam.read()` is logged as `camera_error`. Still to do: check the V4L2 timestamp on the board;
-  - inference thread, on the latest pair: `pyaudio` stub, BGR → RGB, `get_features_from_image_auto_studio_settings`; map each bbox back to 1280 × 720 with the inverse of the resize mode;
+  - inference thread, on the latest pair: BGR → RGB, Squash to the model input, 0..1, LiteRT, decoding with threshold and NMS; map each bbox back to 1280 × 720 (done on Day 4);
   - draw bboxes on the BGR frame in the Flask stream, encoded at ~640 × 360 and ≤ 10 fps so it does not compete with inference for CPU.
 - [ ] Method (b): floor homography from 8–12 tape marks measured in the robot frame (axle origin). It also gives the **bearing**, measured from the camera, used by both methods.
 - [ ] Method (a): `Z = k/h` with one k per class, the depth along the optical axis, combined with the bearing, Camera. Fit k against the camera → front-face depth (axle → front face − 0.17 m).

@@ -3,6 +3,7 @@ import time
 
 from arduino.app_utils import App, Bridge
 from capture import Capture
+from detector import Detector
 from flask_video_webui import Server
 from mcu_link import bridge_call, mission_thread
 from mission import Mission
@@ -38,10 +39,12 @@ event("start", f"status={status_log.path.name} events={events_log.path.name}")
 
 capture = Capture(Camera(), event)
 capture.start()
+detector = Detector(capture, event)
+detector.start()
 
 server = Server()
 register(server.app, mission, capture)
-server.video(lambda: preview(capture))
+server.video(lambda: preview(capture, detector))
 server.start()
 
 threading.Thread(target=mission_thread, args=(mission,), name="mission", daemon=True).start()
