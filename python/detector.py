@@ -2,27 +2,18 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import NamedTuple
 
 import cv2
 import numpy as np
 from ai_edge_litert.interpreter import Interpreter
 from capture import Capture
+from detections import Box, Frame
 
 MODELS = Path("/app/models")
 LABELS = ("box",)
 THRESHOLD = 0.5
 IOU = 0.2
 MAX_BOXES = 10
-
-
-class Box(NamedTuple):
-    label: str
-    score: float
-    x0: float  # 1280 x 720 frame pixels
-    y0: float
-    x1: float
-    y1: float
 
 
 def iou(a: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -52,13 +43,15 @@ def decode(rows: np.ndarray) -> list[Box]:
 
 
 class Detector:
-    def __init__(self, capture: Capture, event: Callable[[str, object], None]):
+    def __init__(self, capture: Capture, event: Callable[[str, object], None], on_frame: Callable[[Frame], None]):
         self._capture = capture
         self._event = event
-        self._boxes: list[Box] = []
+        self._on_frame = on_frame  # every inferred frame, boxes or not
+        self._latest: Frame | None = None
 
-    def boxes(self) -> list[Box]:
-        return self._boxes
+    def latest(self) -> Frame | None:
+        """The boxes of the latest frame inferred, with that frame's time, or None before it."""
+        return self._latest
 
     def run(self) -> None:
         try:
@@ -80,11 +73,13 @@ class Detector:
             if latest is None:
                 time.sleep(0.1)
                 continue
-            rgb = cv2.cvtColor(latest[0], cv2.COLOR_BGR2RGB)
+            frame, t = latest
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             x = cv2.resize(rgb, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
             interpreter.set_tensor(inp["index"], x[None])
             interpreter.invoke()
-            self._boxes = decode(interpreter.get_tensor(out["index"])[0])
+            self._latest = Frame(t, decode(interpreter.get_tensor(out["index"])[0]))
+            self._on_frame(self._latest)
 
     def start(self) -> None:
         threading.Thread(target=self.run, name="detector", daemon=True).start()

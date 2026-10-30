@@ -23,9 +23,7 @@ Every measurement the thesis reports, with its repetitions. The details are in e
 | 2 | Ed and Eb correction (Borenstein) | from those 10 runs | m/count per wheel, b | done |
 | 2 | **After** calibration | 5 × A→B + 5 CW + 5 CCW UMBmark | the same | done |
 | 3 | A→B without obstacles | 5 in a row, then one multi-waypoint path 3 times | pass/fail: P stops inside a 5 cm circle around B_ref (the arrival error is measured on Day 7, S0) | done: 5/5 and 3/3 pass (sent with `./deploy.sh run`; they count, decided by Rolds) |
-| 5–6 | Distance methods (a) k/h and (b) homography | per class: 0.3–1.0 m every 0.1 m, centered and to each side, 20 detections per position | error versus distance | |
-| 5–6 | Distance while driving and braking | 5 approaches per class | error versus the static curve | |
-| 7 | S0 / S1 / S2 missions | 10 each | success, arrival error, detection distance, replans, time | |
+| 7 | S0 / S1 missions (S2 only if time allows, after the other classes) | 10 each | success, arrival error, detection distance, replans, time | |
 
 Every real pose is measured the same way: from a tape cross on the floor (a line along x and its perpendicular), the robot's reference point (along and across the line) and a front point on its centreline (across the line) → reference point and heading (see Day 2, Bench).
 
@@ -155,42 +153,40 @@ Every real pose is measured the same way: from a tape cross on the floor (a line
 
 ## Day 5–6 — Detector on the robot, distance calibration, integration and replanning
 
-Days 5 and 6 are one day (decided by Rolds on Day 4): the integration code does not depend on which distance method wins, and the approaches while driving are measured with the integrated pipeline. The order inside the day stays: the static bench chooses the method, d_max and the association radius before integration is debugged on S1/S2, so a failed run can be traced to the distance, the association or the replanning. Day 7 keeps its number. It is archived as one day: branch `day5`, tag `day5-final`, data in `data/day5/`, one log per block below (`docs/logs/day5-detection.md`, `day5-bench.md`, `day5-integration.md`, `day5-driving.md`).
+Days 5 and 6 are one day (decided by Rolds on Day 4). The obstacle position comes from geometry alone, with no fitted constant (decided by Rolds on Day 5–6, replacing the earlier k/h fit and floor homography): depth from the bbox height, bearing from its bottom middle, and the focal length from the Logitech spec. Nothing is taped or measured on Day 5–6 (decided by Rolds): the only check is that the obstacles drawn on the grid match their real places in the arena with a low error, done before integration is debugged on S0 and S1, so a failed run can be traced to the position, the association or the replanning. d_max (0.7 m) and the association radius (20 cm) keep their initial values. Day 7 keeps its number. It is archived as one day: branch `day5`, tag `day5-final`, data in `data/day5/`, one log per block below (`docs/logs/day5-detection.md`, `day5-grid-check.md`, `day5-integration.md`).
 
 **1. Linux — detection**
 - [x] Capture and inference as two threads (done on Day 4, `docs/logs/day4-bench.md`):
   - capture thread (`python/capture.py`, built on Day 4 for the dataset): reads every frame and keeps only the latest (frame, timestamp) pair; a failure in `cam.open()` or `cam.read()` is logged as `camera_error`;
   - inference thread (`python/detector.py`), on the latest pair: BGR → RGB, Squash to the model input, 0..1, LiteRT, decoding with threshold and NMS; map each bbox back to 1280 × 720;
   - bboxes drawn in the Flask stream (`preview()` in `python/webui.py`), encoded at 640 × 360 and ≤ 10 fps so it does not compete with inference for CPU: the frame is shrunk first and the boxes drawn scaled, which gives the same picture for less CPU.
-- [ ] Check the V4L2 timestamp on the board: `t` reads a few tens of ms before `time.monotonic()` at the end of `read()`; if not, stamp right after `read()` instead.
-- [ ] Method (b): floor homography from 8–12 tape marks measured in the robot frame (axle origin). It also gives the **bearing**, measured from the camera, used by both methods.
-- [ ] Method (a): `Z = k/h` with one k per class, the depth along the optical axis, combined with the bearing, Camera. Fit k against the camera → front-face depth (axle → front face − 0.17 m).
-- [ ] Obstacle position = front face F + depth/2 along the bearing, i.e. the footprint center.
-- [ ] Filters: drop detections beyond d_max (start at 0.7 m of depth Z), bboxes touching the image bottom (full-frame coordinates) and positions outside the arena; require 3 consecutive frames.
+- [x] Check the V4L2 timestamp on the board: `t` reads a few tens of ms before `time.monotonic()` at the end of `read()`; if not, stamp right after `read()` instead. 750 frames: 12.6–69.3 ms before (median 17–18 ms, the 69 ms right after the camera opened), no zero stamp, 30 fps; the V4L2 stamp stays (`docs/logs/day5-detection.md`).
+- [x] Obstacle position from geometry (pinhole, camera horizontal, f = 907 px from the Logitech spec, principal point at the image center; see CLAUDE.md, Camera):
+  - depth of the front face from the bbox height h (frame pixels) and the class height H: `Z = f·H/h`;
+  - bearing from the bottom-middle pixel u_mid: lateral offset `Z·(640 − u_mid)/f` (left positive), so the front face is at F = C + Z·(1, (640 − u_mid)/f), with C = (0.17, 0) in the axle frame;
+  - obstacle = F + depth/2 along the bearing, i.e. the footprint center;
+  - `python/detections.py`; on the 164 boxes of the Day 4 dataset, Z = 0.10–1.12 m (median 0.58), within the ~0.15–1.0 m the images were taken at.
+- [x] Filters: drop detections beyond d_max (0.7 m of depth Z) and positions outside the arena; require 3 consecutive frames at the same spot. A bbox cut by the image bottom (closer than ~0.14 m) takes its depth from the top edge instead of being dropped (found in the grid check).
 
-**2. Bench — static distance curve**
-- [ ] Each class at 0.3–1.0 m every 10 cm, centered and to each side, 20 detections per position (mean and standard deviation) → error versus distance for (a) and (b). Tape from the axle to the obstacle's front face, plus the lateral offset.
-- [ ] Choose (a), (b) or a distance-weighted blend; confirm d_max (block 4 checks the choice while driving).
-- [ ] Set the association radius from the error curve (about 2–3σ at d_max) instead of the initial ~20 cm.
+**2. Arena — grid check (no taping)**
+- [x] With the robot stopped at A, place obstacles in the arena within d_max and in view: the obstacle drawn on the mission page's grid matches its real place in the arena with a low error. Almost exactly, in Rolds' judgment; the same still box within 2 mm between Resets; moving the box needs Reset at A (`docs/logs/day5-grid-check.md`).
 
 **3. Linux — integration and replanning**
-- [ ] Match each frame, by its timestamp (block 1), to the pose closest in time, using the clock offset from Day 3; transform detections robot frame → arena frame.
-- [ ] Ignore detections while the pose state is ROTATE: a timing error of 30–60 ms between a frame and its pose is ~3–5° of bearing at 90 °/s (~3–7 cm at 0.7 m).
-- [ ] Association → grid update → if the path is blocked (with the Day 4 hysteresis), the mission thread:
+- [x] Match each frame, by its timestamp (block 1), to the pose closest in time, using the clock offset from Day 3; transform detections robot frame → arena frame. A 2 s pose history; on the board the frame and its pose are ~11 ms apart.
+- [x] Ignore detections while the pose state is ROTATE: a timing error of 30–60 ms between a frame and its pose is ~3–5° of bearing at 90 °/s (~3–7 cm at 0.7 m).
+- [x] Association → grid update → if the path is blocked (with the Day 4 hysteresis), the mission thread:
   - sends a ramped `stop` and waits for a `pose` with the robot stopped (the ramp takes ~0.5 s and ~6 cm, more than one cell);
   - replans from that pose (A* + simplification), sends the new `set_path` with a new `path_id`, and resumes.
   Path progress and ARRIVED from `pose` messages that still carry the old `path_id` are ignored. Their position is still used.
-- [ ] Flask: the grid, inflated obstacles, current path and pose (grid and obstacles drawn since Day 4): fill `Mission.obstacles` and rebuild `Mission.grid`.
-- [ ] Log detections (bbox, class, distance by (a) and (b)), obstacle list, every replan.
+  The robot waits for the follower's IDLE after `stop`. Decided by Rolds: the odometry is set to A when the app starts and by a new **Reset at A** (which also clears the obstacles), so what the camera sees from A counts, and Start plans with `plan()` around it. The planner keeps no waypoint closer than 12 cm to B, so the 7 cm pull-back always has room (a waypoint 4 cm from B made 5 Starts do nothing). Ending at θ = 0 was tried and dropped (`docs/logs/day5-integration.md`).
+- [x] Flask: the grid, inflated obstacles, current path and pose (grid and obstacles drawn since Day 4): fill `Mission.obstacles` and rebuild `Mission.grid`.
+- [x] Log the detections in the arena frame, the obstacle list, every replan: `*_app_detections.csv`, `*_app_obstacles.csv`, `mission_blocked` and `mission_replan` events.
+- [x] Debug on S0, then on an S1 layout (one box only, decided by Rolds: S2 belongs to Day 7). 15 runs by target, S0 in 6.18–6.22 s, S1 with the box seen from A or found on the way (stop, replan, `p2 = 2`, 9.2–11.5 s); they do not count for Day 7 (decided by Rolds). Firmware and Python odometry agree within 0.5 µm and 0.5 µrad on all of them; 0 overruns, 0 encoder errors, Bridge stack peak ≤ 1000 B (≥ 1048 B untouched), one 3.2 ms `hook` when a replan's `set_path` arrived with the robot stopped; ~5 inferences/s with capture, preview and mission running.
 
-**4. Bench — driving**
-- [ ] 5 approaches per class while the robot drives and brakes toward the obstacle, with the integrated pipeline (detections from block 3, matched to their poses): with the lens 5.45 cm above the floor, (b) shifts ~1.6 cm per 0.1° of pitch at 0.7 m (Z²/h), which the static bench does not show. Error versus the static curve; revisit the block 2 choice if it changes.
-- [ ] Debug on an S1 layout, then on S2 layouts.
+**README:** finish *Obstacle detection*: the distance geometry, d_max; add known limitations found during integration; update **Status**. Done (the README has no Status section; *Running a mission* and *Logs* were updated instead).
 
-**README:** finish *Obstacle detection*: chosen distance method, its error curve, d_max; add known limitations found during integration; update **Status**.
-
-**Done when:** the distance method is chosen from data and its error curve is recorded, and S1 and at least one S2 layout succeed end-to-end.
-**Record:** error versus distance plots for both methods (static and while driving), final d_max, association radius, inference FPS with the final model while the capture thread and the Flask stream run (used by the Day 7 layout check), problems found during integration and their fixes (for the thesis "limitations" section).
+**Done when:** the obstacles on the grid match their real places in the arena with a low error, and S0 and S1 succeed end-to-end.
+**Record:** d_max, association radius, inference FPS with the final model while the capture thread and the Flask stream run (used by the Day 7 layout check), problems found during integration and their fixes (for the thesis "limitations" section).
 
 ---
 
@@ -199,7 +195,7 @@ Days 5 and 6 are one day (decided by Rolds on Day 4): the integration code does 
 Scenarios, 10 runs each:
 - **S0:** no obstacles.
 - **S1:** one obstacle on the A→B line.
-- **S2:** 2–3 obstacles that force a detour.
+- **S2:** 2–3 obstacles that force a detour, only if time allows (decided by Rolds on Day 5–6): it needs the other classes (only one box exists), so the dataset is captured, the model retrained and everything repeated with them first. Without it, the thesis covers the box only.
 
 Before the runs:
 - [ ] Check every S1/S2 obstacle layout with the planner on the PC (real obstacle positions + inflation) and use only layouts where:
@@ -216,7 +212,7 @@ Per run:
 
 **README:** fill *Results* (S0–S2 table and plots); set **Status** to final.
 
-**Done when:** 30 runs are logged and summarized.
+**Done when:** 20 runs (S0 and S1) are logged and summarized, 30 with S2.
 
 ---
 

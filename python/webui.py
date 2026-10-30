@@ -10,6 +10,7 @@ from collections.abc import Iterator
 
 import cv2
 from capture import Capture
+from detections import in_view, locate
 from detector import Detector
 from flask import Flask, jsonify
 from mission import Mission
@@ -37,7 +38,7 @@ PAGE = """<!doctype html>
 </head>
 <body>
 <h1>AGV mission: A &rarr; B</h1>
-<button id="start">Start</button><button id="stop">Stop</button>
+<button id="start">Start</button><button id="stop">Stop</button><button id="reset">Reset at A</button>
 <div class="row">
 <div>
 <canvas id="arena" width="800" height="600"></canvas>
@@ -57,6 +58,7 @@ const px = (x, y) => [x * s, cv.height - y * s];  // arena frame: y up
 function post(url) { fetch(url, {method: "POST"}).then(refresh); }
 document.getElementById("start").onclick = () => post("/start");
 document.getElementById("stop").onclick = () => post("/stop");
+document.getElementById("reset").onclick = () => post("/reset");
 
 function dot(x, y, r, color) {
   const [u, v] = px(x, y);
@@ -113,7 +115,8 @@ function refresh() {
     draw(st);
     const p = st.pose;
     document.getElementById("info").textContent =
-      `mission: ${st.status}   path_id: ${st.path_id}\\n` + (p ?
+      `mission: ${st.status}   path_id: ${st.path_id}   obstacles: ` +
+      (st.obstacles.map(o => `${o.label} (${o.x.toFixed(3)}, ${o.y.toFixed(3)}) n=${o.n}`).join(", ") || "none") + `\\n` + (p ?
       `axle: x=${p.x.toFixed(3)} m  y=${p.y.toFixed(3)} m  theta=${(p.theta * 180 / Math.PI).toFixed(1)} deg\\n` +
       `state: ${STATES[p.state] ?? p.state}  path_id: ${p.path_id}  wp_idx: ${p.wp_idx}  age: ${p.age_s.toFixed(2)} s`
       : "no pose yet");
@@ -136,11 +139,15 @@ def preview(capture: Capture, detector: Detector) -> Iterator[bytes]:
             continue
         small = cv2.resize(latest[0], PREVIEW_SIZE, interpolation=cv2.INTER_AREA)
         s = PREVIEW_SIZE[0] / 1280
-        for b in detector.boxes():
+        inferred = detector.latest()
+        for b in inferred.boxes if inferred is not None else []:
             p0, p1 = (round(b.x0 * s), round(b.y0 * s)), (round(b.x1 * s), round(b.y1 * s))
-            cv2.rectangle(small, p0, p1, (0, 0, 255), 2)
-            cv2.putText(small, f"{b.label} {b.score:.2f}", (p0[0], max(p0[1] - 5, 12)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            seen = locate(b.label, b.x0, b.y0, b.x1, b.y1)
+            # Red within d_max, grey beyond it
+            color = (0, 0, 255) if in_view(seen) else (160, 160, 160)
+            cv2.rectangle(small, p0, p1, color, 2)
+            cv2.putText(small, f"{b.label} {b.score:.2f} Z={seen.z:.2f} y={seen.y:+.2f}",
+                        (p0[0], max(p0[1] - 5, 12)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         ok, jpg = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])
         if ok:
             yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpg.tobytes() + b"\r\n"
@@ -159,4 +166,9 @@ def register(app: Flask, mission: Mission) -> None:
         return ("", 204)
 
     app.add_url_rule("/start", "start", start, methods=["POST"])
+    def reset():
+        mission.post("reset")
+        return ("", 204)
+
     app.add_url_rule("/stop", "stop", stop, methods=["POST"])
+    app.add_url_rule("/reset", "reset", reset, methods=["POST"])

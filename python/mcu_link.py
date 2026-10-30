@@ -11,7 +11,7 @@ HB_PERIOD_S = 0.2
 PING_RETRY_S = 0.5
 CMD_POLL_S = 0.2
 MISSION_STEP_S = 0.05
-MISSION_COMMANDS = ("start", "abort")  # cmd/ texts that go to the mission, like the UI buttons
+MISSION_COMMANDS = ("start", "abort", "reset")  # cmd/ texts that go to the mission, like the UI buttons
 BRIDGE_ERRORS = (TimeoutError, ValueError, RuntimeError, ConnectionError)
 
 
@@ -63,6 +63,7 @@ def mission_thread(mission: Mission) -> None:
         event("cmd_discarded", text)
     wait_for_mcu()
     threading.Thread(target=heartbeat, name="heartbeat", daemon=True).start()
+    mission.post("reset")  # the robot starts at A, so what the camera sees from there counts
     next_poll = 0.0
     while True:
         try:

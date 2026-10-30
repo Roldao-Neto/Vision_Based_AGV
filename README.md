@@ -59,11 +59,10 @@ uvx basedpyright python bricks
 
 ## Running a mission
 
-1. Deploy and put the robot on A: the rear reference point on the mark, facing B.
-2. Open `http://<board-ip>:8888/` and press **Start**. The mission sets the odometry to the start pose, sends the path to B and waits for ARRIVED. The page draws the arena, the path and the live pose.
-3. **Stop** ends the mission with a ramped stop.
-
-**Frames.** The STM32 tracks the axle midpoint, 7 cm behind the robot center, and every waypoint is in axle coordinates. The start axle is (0.178, 0.745), and the last waypoint is pulled back 7 cm so the **center** stops on B.
+1. Deploy and put the robot on A: the rear reference point on the mark, facing B. On start the app sets the odometry to A.
+2. Open `http://<board-ip>:8888/`. Whenever the robot is put back on A by hand, or an obstacle is moved, press **Reset at A**: it sets the odometry to A again and clears the obstacles.
+3. Press **Start**. The mission plans a path to B around the obstacles already seen, sends it and waits for ARRIVED. When the camera finds an obstacle on the remaining path, the robot stops with a ramp, replans from there and goes on. The page draws the arena, the grid, the obstacles with their inflations, the path, the live pose and the camera with each detection.
+4. **Stop** ends the mission with a ramped stop.
 
 **Manual commands** go to the running app with `./deploy.sh run <command>`, which prints the ack:
 
@@ -73,6 +72,7 @@ uvx basedpyright python bricks
 | `path <id> <x1_mm> <y1_mm> …` | `set_path` |
 | `stop` | ramped stop, pauses the run |
 | `idle` | ramped stop, ends the run |
+| `start`, `abort`, `reset` | the Start, Stop and Reset at A buttons |
 
 A **run** lasts from its first `set_path` to the goal or a failure, replans included, and is recorded tick by tick.
 
@@ -85,6 +85,8 @@ Each app start writes a set of CSV files with unique names to `/app/logs/` on th
 | `*_app_events.csv` | commands, acks, `mission_*` events, the end of every run |
 | `*_app_pose.csv` | every pose, with the Linux clock offset |
 | `*_app_paths.csv` | every `set_path` sent, with its ack |
+| `*_app_detections.csv` | every detected box: the pose matched to its frame, distance, bearing, position in the arena and what happened to it |
+| `*_app_obstacles.csv` | the obstacle list after every change |
 | `*_app_status.csv`, `*_app_hook.csv` | STM32 health |
 | `*_path.csv`, `*_path_<record>_paths<n>.csv` | one row per run, and each run's samples (one per 20 ms tick) |
 
@@ -116,6 +118,10 @@ Result, before → after (5 runs each): UMBmark E_max,syst 41.9 → 8.1 mm; stra
   - **TODO**
 
 - **Model:** Edge Impulse YOLO-Pro, 160 × 160 RGB, run as a float32 TFLite network with LiteRT on the board, ~5 inferences/s.
+
+- **Distance and position, from geometry alone** (no camera calibration, nothing fitted): a pinhole camera pointing horizontally, 54.5 mm above the floor, with f = 907 px at 1280 × 720 from the Logitech spec (78° diagonal). The depth of the obstacle's front face is `Z = f·H/h` (H the class height, h the box height in pixels); when the box is cut by the image bottom (closer than ~0.14 m), it comes from the top edge instead, `Z = f·(H − 0.0545)/(360 − y_top)`. The bearing comes from the box's bottom middle, and the obstacle is placed at the center of its footprint. Detections count within d_max = 0.7 m of depth, inside the arena, after 3 consecutive frames at the same spot, and not while the robot rotates; each frame is matched to the pose at the moment it was taken. Checked by placing the box around the arena and comparing the grid with it: they match almost exactly.
+
+- **Known limitations:** the depth resolution is the model's (one model pixel of box height is ~3 cm at 0.7 m); an obstacle is never removed during a session, so moving one needs Reset at A; a box closer than its inflation to the robot at A means no path, and the robot does not move; after a detour the robot stops with its center on B but facing along the last segment.
 
 - **Interim model (box only, plus background images):** 449 images, 166 with the box and 283 of background only; 352 for training (71 of them for validation) and 97 for testing. On the test set: mAP@[IoU=50] 1.000, mAP@[IoU=0.50:0.95] 0.804, recall 0.829; small (distant) boxes are the weakest, mAP 0.754. These figures will be replaced by those of the final model with all classes.
 

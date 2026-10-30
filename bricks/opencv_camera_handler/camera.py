@@ -6,8 +6,8 @@ import cv2
 class Camera:
     """Logitech C920 at 1280x720 MJPG.
 
-    Changing the resolution invalidates the floor homography and the per-class k/h
-    distance fits.
+    Changing the resolution changes the focal length in pixels that the obstacle
+    distance uses (907 px at 1280x720).
     """
 
     def __init__(self, device=None, width=1280, height=720):

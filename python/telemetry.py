@@ -3,8 +3,10 @@ from collections.abc import Callable
 
 from arduino.app_utils import Logger
 from clock_sync import ClockSync
+from detections import Box, Sighting
 from mcu_commands import END_REASONS, MODE_NAMES
 from mission import Pose
+from planner import Obstacle
 from run_log import RunLog, open_run_log
 from run_samples import RunSamples
 
@@ -15,6 +17,10 @@ EVENTS_HEADER = ["rx_monotonic", "event", "detail"]
 HOOK_HEADER = ["rx_monotonic", "t_ms", "hook_us"]
 POSE_HEADER = ["rx_monotonic", "t_ms", "x", "y", "theta", "state", "path_id", "wp_idx", "offset_s", "delay_ms", "t_linux"]
 PATHS_HEADER = ["rx_monotonic", "path_id", "waypoints", "xy_mm", "ack"]
+# Every box of every inferred frame: the pose matched to the frame (empty without one), the
+# geometry, and what happened to it (no_pose, rotate, far, outside, seen, confirmed)
+DETECTIONS_HEADER = ["rx_monotonic", "frame_t", "pose_t", "pose_x", "pose_y", "pose_theta", "pose_state", "path_id", "label", "score", "x0", "y0", "x1", "y1", "z", "bearing", "axle_x", "axle_y", "arena_x", "arena_y", "outcome"]
+OBSTACLES_HEADER = ["rx_monotonic", "index", "label", "x", "y", "n"]  # the whole list after every change
 RUN_END_HEADER = ["rx_monotonic", "t_ms", "record_id", "mode", "duration_ms", "reason", "p1", "p2", "p3", "p4", "counts_l", "counts_r", "errors_l", "errors_r", "samples", "x0_um", "y0_um", "th0_urad", "x_um", "y_um", "th_urad", "m_per_count_l_pm", "m_per_count_r_pm", "track_nm"]
 RUN_SAMPLE_HEADER = ["t_us", "phase", "v_mm_s", "w_mrad_s", "counts_l", "counts_r", "duty_l", "duty_r"]
 
@@ -24,6 +30,8 @@ events_log = open_run_log("app", EVENTS_HEADER, "events")
 hook_log = open_run_log("app", HOOK_HEADER, "hook")
 pose_log = open_run_log("app", POSE_HEADER, "pose")
 paths_log = open_run_log("app", PATHS_HEADER, "paths")
+detections_log = open_run_log("app", DETECTIONS_HEADER, "detections")
+obstacles_log = open_run_log("app", OBSTACLES_HEADER, "obstacles")
 clock = ClockSync()
 pose_listeners: list[Callable[[Pose], None]] = []
 run_end_listeners: list[Callable[[int, int], None]] = []  # (path_id, reason)
@@ -61,6 +69,22 @@ def on_pose(t_ms: int, x: float, y: float, theta: float, state: int, path_id: in
 def log_path(path_id: int, xy_mm: list[int], ack: object) -> None:
     """Every set_path sent (the mission's and the cmd/ ones)."""
     paths_log.row(time.monotonic(), path_id, len(xy_mm) // 2, " ".join(map(str, xy_mm)), repr(ack))
+
+
+def log_detection(frame_t: float, pose: Pose | None, b: Box, s: Sighting, p: tuple[float, float], outcome: str) -> None:
+    where = ["", "", "", "", "", ""] if pose is None else [
+        f"{pose.t_linux:.6f}", f"{pose.x:.4f}", f"{pose.y:.4f}", f"{pose.theta:.4f}", pose.state, pose.path_id]
+    detections_log.row(time.monotonic(), f"{frame_t:.6f}", *where, b.label, f"{b.score:.3f}",
+                       f"{b.x0:.1f}", f"{b.y0:.1f}", f"{b.x1:.1f}", f"{b.y1:.1f}", f"{s.z:.4f}",
+                       f"{s.bearing:.4f}", f"{s.x:.4f}", f"{s.y:.4f}", f"{p[0]:.4f}", f"{p[1]:.4f}", outcome)
+
+
+def log_obstacles(obstacles: list[Obstacle]) -> None:
+    now = time.monotonic()
+    if not obstacles:
+        obstacles_log.row(now, "", "", "", "", "")  # the list was cleared
+    for i, o in enumerate(obstacles):
+        obstacles_log.row(now, i, o.label, f"{o.x:.4f}", f"{o.y:.4f}", o.n)
 
 
 def on_run_samples(record_id: int, first: int, total: int, flat: list[int]) -> None:

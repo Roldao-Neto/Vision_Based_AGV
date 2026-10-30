@@ -11,6 +11,8 @@ from opencv_camera_handler import Camera
 from telemetry import (
     event,
     events_log,
+    log_detection,
+    log_obstacles,
     log_path,
     on_emergency,
     on_hook,
@@ -24,7 +26,7 @@ from telemetry import (
 )
 from webui import preview, register
 
-mission = Mission(bridge_call, event, log_path)
+mission = Mission(bridge_call, event, log_path, log_detection, log_obstacles)
 pose_listeners.append(mission.on_pose)
 run_end_listeners.append(mission.on_run_end)
 
@@ -39,7 +41,7 @@ event("start", f"status={status_log.path.name} events={events_log.path.name}")
 
 capture = Capture(Camera(), event)
 capture.start()
-detector = Detector(capture, event)
+detector = Detector(capture, event, mission.on_frame)
 detector.start()
 
 server = Server()

@@ -141,19 +141,25 @@ def visible(p: Point, q: Point, obstacles: list[Obstacle]) -> bool:
     return in_corridor(p) and in_corridor(q) and not _hits(p, q, obstacles, MARGIN_M)
 
 
-def simplify(points: list[Point], obstacles: list[Obstacle]) -> list[Point]:
-    """Line of sight: from each kept point, jump to the farthest later point in view."""
+def simplify(points: list[Point], obstacles: list[Obstacle], last_leg: float = 0.0) -> list[Point]:
+    """Line of sight: from each kept point, jump to the farthest later point in view. A point
+    closer than last_leg to the goal is not kept (only the goal itself), unless nothing else is
+    in view."""
+    goal = points[-1]
     out = [points[0]]
     i = 0
     while i < len(points) - 1:
-        i = next((j for j in range(len(points) - 1, i + 1, -1) if visible(points[i], points[j], obstacles)), i + 1)
+        i = next((j for j in range(len(points) - 1, i + 1, -1)
+                  if (j == len(points) - 1 or math.dist(points[j], goal) >= last_leg)
+                  and visible(points[i], points[j], obstacles)), i + 1)
         out.append(points[i])
     return out
 
 
-def plan(start: Point, goal: Point, obstacles: list[Obstacle]) -> list[Point] | None:
+def plan(start: Point, goal: Point, obstacles: list[Obstacle], last_leg: float = 0.0) -> list[Point] | None:
     """Waypoints from start (not included) to goal, or None when there is no path: start or
-    goal outside the corridor or in an occupied cell, or no free way between them."""
+    goal outside the corridor or in an occupied cell, or no free way between them. last_leg: the
+    shortest last segment wanted (see simplify())."""
     if not (in_corridor(start) and in_corridor(goal)):
         return None
     grid = build_grid(obstacles)
@@ -163,7 +169,7 @@ def plan(start: Point, goal: Point, obstacles: list[Obstacle]) -> list[Point] | 
     cells = astar(grid, s, g)
     if cells is None:
         return None
-    return simplify([start, *map(cell_center, cells[1:-1]), goal], obstacles)[1:]
+    return simplify([start, *map(cell_center, cells[1:-1]), goal], obstacles, last_leg)[1:]
 
 
 def blocked(path: list[Point], obstacles: list[Obstacle]) -> bool:
