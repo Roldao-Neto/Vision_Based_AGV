@@ -105,3 +105,23 @@ Primeiras missões reais com a bateria dos motores ligada, pela página: Reset a
 
 - S0 e S1 chegam a B; o replanejamento funciona numa corrida real.
 - O erro do Start com a caixa vista de A está corrigido sem mudar o final do robô: centro em B, alinhado com o último segmento.
+
+## 7. Planejador: grade de 2,5 cm, margem de 1 cm e dois raios
+
+### O que foi feito
+
+A margem de 3 cm era grande demais, somada ao raio de giro do robô. Mudanças em `python/planner.py`:
+
+- **Células de 2,5 cm** (80 × 60, eram 5 cm) e **margem de 1 cm**. As paredes ficam infladas em 22,6 cm.
+
+- **Dois raios em volta de um obstáculo.** Passando reto, o robô ocupa metade da largura, 12 cm; girando no lugar, os cantos da frente varrem 21,6 cm. Com o canto da caixa (5,67 cm) e a margem: **18,7 cm para passar** e **28,3 cm para girar**.
+
+- **Célula da partida.** A célula da partida conta como livre quando o próprio ponto tem espaço para girar; uma partida de fato dentro do raio de girar continua falhando.
+
+Uma primeira versão dos dois raios, com a grade no raio de passar, foi abandonada: o A* contornava a caixa a ~19 cm, em V, e não sobrava ponto de giro com uma reta livre até o outro lado (nenhum caminho nos casos de S1).
+
+### Conclusões
+
+- O robô passa a caixa a ~19 cm do centro (~2,7 cm da face, quando de frente) e só gira longe dela; os caminhos ficaram 5–8 % mais curtos.
+- O custo é a histerese menor: replanejamentos seguidos ficam mais prováveis.
+- Os layouts do Dia 7 têm de ser conferidos com este planejador.

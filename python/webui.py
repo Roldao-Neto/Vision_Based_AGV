@@ -83,8 +83,9 @@ function drawGrid(st) {
   for (let v = cv.height; v >= 0; v -= c) { ctx.moveTo(0, v); ctx.lineTo(cv.width, v); }
   ctx.stroke();
   st.obstacles.forEach(o => {
-    circle(o.x, o.y, o.r_plan, "#c62828", [4, 4]);  // planning inflation
-    circle(o.x, o.y, o.r_block, "#c62828", []);     // blocked check, without the margin
+    circle(o.x, o.y, o.r_plan, "#c62828", [4, 4]);  // passing inflation, planning
+    circle(o.x, o.y, o.r_block, "#c62828", []);     // passing inflation, blocked check (no margin)
+    circle(o.x, o.y, o.r_turn, "#ef9a9a", [1, 3]);  // turning inflation: no waypoint inside
     dot(o.x, o.y, 4, "#c62828");
   });
 }

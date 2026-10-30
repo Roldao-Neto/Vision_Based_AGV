@@ -93,7 +93,8 @@ class Mission:
 
     def snapshot(self) -> dict[str, object]:
         """For the UI: the axle pose, and the robot center it is drawn around; the grid as one
-        string per row from y = 0 ("#" occupied), and each obstacle's two inflated radii."""
+        string per row from y = 0 ("#" occupied), and each obstacle's passing radius (planning and
+        blocked) and turning radius."""
         with self._lock:
             pose = self._poses[-1] if self._poses else None
             state: dict[str, object] = {
@@ -103,8 +104,9 @@ class Mission:
                 "pose": None,
                 "cell": CELL_M,
                 "grid": ["".join("#" if c else "." for c in row) for row in self.grid],
-                "obstacles": [{"label": o.label, "x": o.x, "y": o.y, "n": o.n, "r_plan": o.radius(MARGIN_M),
-                               "r_block": o.radius(0.0)} for o in self.obstacles],
+                "obstacles": [{"label": o.label, "x": o.x, "y": o.y, "n": o.n, "r_plan": o.pass_radius(MARGIN_M),
+                               "r_block": o.pass_radius(0.0), "r_turn": o.turn_radius(MARGIN_M)}
+                              for o in self.obstacles],
             }
         if pose is not None:
             cx, cy = axle_to_center(pose.x, pose.y, pose.theta)
