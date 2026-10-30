@@ -1,6 +1,6 @@
 """The capture thread: reads every camera frame and keeps only the latest (frame, t) pair.
 
-Readers (the web preview and snapshot now, inference on Day 5) take that pair and never
+Readers (the web preview and the inference thread) take that pair and never
 wait for the camera, so a frame is never older than its stamp. A failure in open() or
 read() is logged as a camera_error event and ends the thread.
 """

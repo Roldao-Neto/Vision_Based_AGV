@@ -59,7 +59,7 @@ class Mission:
         self.path_id = 0
         self.path: list[Point] = []
         self._started = 0.0
-        self.obstacles: list[Obstacle] = []  # discovered during a run, from Day 6
+        self.obstacles: list[Obstacle] = []  # discovered during a run, from Day 5–6
         self.grid = build_grid(self.obstacles)
 
     # Any thread

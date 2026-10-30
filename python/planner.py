@@ -28,7 +28,7 @@ Y_MAX = 1.5 - ROTATION_RADIUS_M - MARGIN_M  # 1.254
 # Circumscribed radius of each class footprint (center to farthest corner)
 FOOTPRINT_RADIUS_M = {"box": math.hypot(0.0802, 0.0802) / 2}  # 80.2 x 80.2 mm base: 56.7 mm
 
-ASSOCIATION_RADIUS_M = 0.20  # same class within this = same obstacle; revisited on Day 5
+ASSOCIATION_RADIUS_M = 0.20  # same class within this = same obstacle; revisited on Day 5–6
 
 Cell = tuple[int, int]  # (ix, iy)
 Grid = list[list[bool]]  # occupied[iy][ix]
