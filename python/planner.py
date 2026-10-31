@@ -1,32 +1,24 @@
-"""Path planner in axle coordinates (SI units): occupancy grid, A*, line-of-sight
-simplification, obstacle association and the "path blocked?" check.
-
-The grid only finds the way around (decided by Rolds on Day 4): 5 cm cells, and a cell is
-occupied if any part of it is outside the wall corridor or inside an obstacle's inflation, so
-every path through free cells is clear. Simplification and the blocked check measure the exact
-distance from each segment to each obstacle center, so the clearance and the 3 cm hysteresis
-do not depend on the cell size.
-"""
-
 import heapq
+import itertools
 import math
 from dataclasses import dataclass
 
 from arena import Point
 
-CELL_M = 0.05
-NX, NY = 40, 30  # 2 x 1.5 m
+CELL_M = 0.025
+NX, NY = 80, 60  # 2 x 1.5 m
 
-ROTATION_RADIUS_M = 0.216  # farthest point of the body from the axle
-MARGIN_M = 0.03
+ROTATION_RADIUS_M = 0.216  # farthest point of the body from the axle: turning in place
+HALF_WIDTH_M = 0.12  # the body is 24 cm wide: driving straight past
+MARGIN_M = 0.01
 
-# Free corridor for the axle: walls inflated by 24.6 cm, except the wall behind A (x = 0)
-X_MAX = 2.0 - ROTATION_RADIUS_M - MARGIN_M  # 1.754
-Y_MIN = ROTATION_RADIUS_M + MARGIN_M  # 0.246
-Y_MAX = 1.5 - ROTATION_RADIUS_M - MARGIN_M  # 1.254
+# Free corridor for the axle: walls inflated by 22.6 cm, except the wall behind A (x = 0)
+X_MAX = 2.0 - ROTATION_RADIUS_M - MARGIN_M  # 1.774
+Y_MIN = ROTATION_RADIUS_M + MARGIN_M  # 0.226
+Y_MAX = 1.5 - ROTATION_RADIUS_M - MARGIN_M  # 1.274
 
-# Circumscribed radius of each class footprint (center to farthest corner)
-FOOTPRINT_RADIUS_M = {"box": math.hypot(0.0802, 0.0802) / 2}  # 80.2 x 80.2 mm base: 56.7 mm
+# Circumscribed radius of each class footprint (center to farthest point)
+FOOTPRINT_RADIUS_M = {"cone": 0.035}  # the widest of the four cones (base 68.6-70.0 mm across)
 
 ASSOCIATION_RADIUS_M = 0.20  # same class within this = same obstacle; revisited on Day 5–6
 
@@ -41,8 +33,10 @@ class Obstacle:
     y: float
     n: int = 1  # detections averaged into x, y
 
-    def radius(self, margin: float) -> float:
-        """Inflated radius: rotation radius + margin + footprint radius."""
+    def pass_radius(self, margin: float) -> float:
+        return HALF_WIDTH_M + margin + FOOTPRINT_RADIUS_M[self.label]
+
+    def turn_radius(self, margin: float) -> float:
         return ROTATION_RADIUS_M + margin + FOOTPRINT_RADIUS_M[self.label]
 
 
@@ -76,7 +70,7 @@ def _occupied(ix: int, iy: int, obstacles: list[Obstacle]) -> bool:
     for o in obstacles:
         # Nearest point of the cell to the obstacle center
         nx, ny = min(max(o.x, x0), x1), min(max(o.y, y0), y1)
-        if math.hypot(o.x - nx, o.y - ny) < o.radius(MARGIN_M):
+        if math.hypot(o.x - nx, o.y - ny) < o.turn_radius(MARGIN_M):
             return True
     return False
 
@@ -93,8 +87,7 @@ NEIGHBOURS = [(dx, dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy]
 
 
 def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell] | None:
-    """Shortest 8-neighbour path of free cells (diagonal cost sqrt 2, no corner cutting), or
-    None. The octile heuristic is exact on an empty grid, so A* finds Dijkstra's optimum."""
+
     def h(c: Cell) -> float:
         dx, dy = abs(c[0] - goal[0]), abs(c[1] - goal[1])
         return dx + dy + (math.sqrt(2) - 2) * min(dx, dy)
@@ -121,6 +114,7 @@ def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell] | None:
                 cost[(nx, ny)] = new
                 prev[(nx, ny)] = c
                 heapq.heappush(heap, (new + h((nx, ny)), (nx, ny)))
+
     return None
 
 
@@ -132,19 +126,18 @@ def _segment_distance(p: Point, q: Point, c: Point) -> float:
 
 
 def _hits(p: Point, q: Point, obstacles: list[Obstacle], margin: float) -> bool:
-    return any(_segment_distance(p, q, (o.x, o.y)) < o.radius(margin) for o in obstacles)
+    return any(_segment_distance(p, q, (o.x, o.y)) < o.pass_radius(margin) for o in obstacles)
+
+
+def can_turn(p: Point, obstacles: list[Obstacle], margin: float = MARGIN_M) -> bool:
+    return all(math.hypot(o.x - p[0], o.y - p[1]) >= o.turn_radius(margin) for o in obstacles)
 
 
 def visible(p: Point, q: Point, obstacles: list[Obstacle]) -> bool:
-    """The segment stays in the wall corridor (a rectangle, so its ends suffice) and outside
-    every planning inflation."""
     return in_corridor(p) and in_corridor(q) and not _hits(p, q, obstacles, MARGIN_M)
 
 
 def simplify(points: list[Point], obstacles: list[Obstacle], last_leg: float = 0.0) -> list[Point]:
-    """Line of sight: from each kept point, jump to the farthest later point in view. A point
-    closer than last_leg to the goal is not kept (only the goal itself), unless nothing else is
-    in view."""
     goal = points[-1]
     out = [points[0]]
     i = 0
@@ -157,23 +150,24 @@ def simplify(points: list[Point], obstacles: list[Obstacle], last_leg: float = 0
 
 
 def plan(start: Point, goal: Point, obstacles: list[Obstacle], last_leg: float = 0.0) -> list[Point] | None:
-    """Waypoints from start (not included) to goal, or None when there is no path: start or
-    goal outside the corridor or in an occupied cell, or no free way between them. last_leg: the
-    shortest last segment wanted (see simplify())."""
-    if not (in_corridor(start) and in_corridor(goal)):
+    if not (in_corridor(start) and in_corridor(goal) and can_turn(start, obstacles)):
         return None
     grid = build_grid(obstacles)
     s, g = cell_of(start), cell_of(goal)
-    if grid[s[1]][s[0]] or grid[g[1]][g[0]]:
+    if grid[g[1]][g[0]]:
         return None
+    grid[s[1]][s[0]] = False
     cells = astar(grid, s, g)
     if cells is None:
         return None
     return simplify([start, *map(cell_center, cells[1:-1]), goal], obstacles, last_leg)[1:]
 
 
+def leg_clear(p: Point, w: Point, obstacles: list[Obstacle]) -> bool:
+    """The robot can still drive from p to the waypoint w, and a replan can start there."""
+    return not _hits(p, w, obstacles, 0.0) and can_turn(w, obstacles)
+
+
 def blocked(path: list[Point], obstacles: list[Obstacle]) -> bool:
-    """path: the current axle position, then the waypoints not reached yet. Blocked if a
-    segment enters an inflation without the margin, so a path planned with the margin keeps
-    3 cm of hysteresis."""
-    return any(_hits(p, q, obstacles, 0.0) for p, q in zip(path, path[1:]))
+    return (any(_hits(p, q, obstacles, 0.0) for p, q in itertools.pairwise(path))
+            or not all(can_turn(w, obstacles, 0.0) for w in path[1:-1]))

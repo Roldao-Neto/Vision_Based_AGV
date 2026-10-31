@@ -50,7 +50,7 @@ PAGE = """<!doctype html>
 </div>
 <script>
 const W = 2.0, H = 1.5;
-const STATES = ["IDLE", "ROTATE", "DRIVE", "ARRIVED"];
+const STATES = ["IDLE", "ROTATE", "DRIVE", "ARRIVED", "LOOK"];
 const cv = document.getElementById("arena"), ctx = cv.getContext("2d");
 const s = cv.width / W;
 const px = (x, y) => [x * s, cv.height - y * s];  // arena frame: y up
@@ -83,8 +83,9 @@ function drawGrid(st) {
   for (let v = cv.height; v >= 0; v -= c) { ctx.moveTo(0, v); ctx.lineTo(cv.width, v); }
   ctx.stroke();
   st.obstacles.forEach(o => {
-    circle(o.x, o.y, o.r_plan, "#c62828", [4, 4]);  // planning inflation
-    circle(o.x, o.y, o.r_block, "#c62828", []);     // blocked check, without the margin
+    circle(o.x, o.y, o.r_plan, "#c62828", [4, 4]);  // passing inflation, planning
+    circle(o.x, o.y, o.r_block, "#c62828", []);     // passing inflation, blocked check (no margin)
+    circle(o.x, o.y, o.r_turn, "#ef9a9a", [1, 3]);  // turning inflation: no waypoint inside
     dot(o.x, o.y, 4, "#c62828");
   });
 }
@@ -143,7 +144,7 @@ def preview(capture: Capture, detector: Detector) -> Iterator[bytes]:
         for b in inferred.boxes if inferred is not None else []:
             p0, p1 = (round(b.x0 * s), round(b.y0 * s)), (round(b.x1 * s), round(b.y1 * s))
             seen = locate(b.label, b.x0, b.y0, b.x1, b.y1)
-            # Red within d_max, grey beyond it
+            # Red within d_max, grey beyond it or too cut off to place
             color = (0, 0, 255) if in_view(seen) else (160, 160, 160)
             cv2.rectangle(small, p0, p1, color, 2)
             cv2.putText(small, f"{b.label} {b.score:.2f} Z={seen.z:.2f} y={seen.y:+.2f}",

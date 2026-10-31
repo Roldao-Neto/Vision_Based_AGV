@@ -178,6 +178,7 @@ Days 5 and 6 are one day (decided by Rolds on Day 4). The obstacle position come
   - sends a ramped `stop` and waits for a `pose` with the robot stopped (the ramp takes ~0.5 s and ~6 cm, more than one cell);
   - replans from that pose (A* + simplification), sends the new `set_path` with a new `path_id`, and resumes.
   Path progress and ARRIVED from `pose` messages that still carry the old `path_id` are ignored. Their position is still used.
+  Then the planner, decided by Rolds after testing: 2.5 cm cells, a 1 cm margin, and two clearances around an obstacle, 18.7 cm to drive past and 28.3 cm to turn (one 30.3 cm radius before); the start cell counts as free when the start itself has room to turn.
   The robot waits for the follower's IDLE after `stop`. Decided by Rolds: the odometry is set to A when the app starts and by a new **Reset at A** (which also clears the obstacles), so what the camera sees from A counts, and Start plans with `plan()` around it. The planner keeps no waypoint closer than 12 cm to B, so the 7 cm pull-back always has room (a waypoint 4 cm from B made 5 Starts do nothing). Ending at θ = 0 was tried and dropped (`docs/logs/day5-integration.md`).
 - [x] Flask: the grid, inflated obstacles, current path and pose (grid and obstacles drawn since Day 4): fill `Mission.obstacles` and rebuild `Mission.grid`.
 - [x] Log the detections in the arena frame, the obstacle list, every replan: `*_app_detections.csv`, `*_app_obstacles.csv`, `mission_blocked` and `mission_replan` events.
@@ -199,7 +200,7 @@ Scenarios, 10 runs each:
 
 Before the runs:
 - [ ] Check every S1/S2 obstacle layout with the planner on the PC (real obstacle positions + inflation) and use only layouts where:
-  - a path exists (one centered obstacle already leaves only ~20 cm corridors for the axle);
+  - a path exists (check with the planner in use: since Day 5–6, 2.5 cm cells, 1 cm margin, 18.7 cm to pass and 28.3 cm to turn around a box);
   - same-class obstacles are farther apart than the association radius (closer ones merge into one obstacle);
   - every obstacle that blocks the planned or a replanned path stays inside the camera's horizontal FOV and d_max for at least 3 inference frames (at the Day 5–6 FPS, driving at 0.25 m/s) before the robot has to stop for it.
 

@@ -17,7 +17,16 @@ from arena import (
 )
 from detections import Confirm, Frame, Seen, in_arena, in_view, locate, to_arena
 from mcu_commands import END_REASONS, IDLE
-from planner import CELL_M, MARGIN_M, Obstacle, associate, blocked, build_grid, plan
+from planner import (
+    CELL_M,
+    MARGIN_M,
+    Obstacle,
+    associate,
+    blocked,
+    build_grid,
+    leg_clear,
+    plan,
+)
 
 IDLE_STATE = 0  # follower phases in the pose notification
 ROTATE = 1
@@ -40,7 +49,7 @@ class Pose:
     x: float  # axle, m
     y: float
     theta: float  # rad, not wrapped
-    state: int  # follower phase: 0 IDLE, 1 ROTATE, 2 DRIVE, 3 ARRIVED
+    state: int  # follower phase: 0 IDLE, 1 ROTATE, 2 DRIVE, 3 ARRIVED, 4 LOOK
     path_id: int
     wp_idx: int
 
@@ -75,6 +84,7 @@ class Mission:
         self._started = 0.0
         self.obstacles: list[Obstacle] = []
         self.grid = build_grid(self.obstacles)
+        self._deferred_wp: int | None = None  # a later leg is blocked: replan when this waypoint is reached
 
     # Any thread
 
@@ -93,7 +103,8 @@ class Mission:
 
     def snapshot(self) -> dict[str, object]:
         """For the UI: the axle pose, and the robot center it is drawn around; the grid as one
-        string per row from y = 0 ("#" occupied), and each obstacle's two inflated radii."""
+        string per row from y = 0 ("#" occupied), and each obstacle's passing radius (planning and
+        blocked) and turning radius."""
         with self._lock:
             pose = self._poses[-1] if self._poses else None
             state: dict[str, object] = {
@@ -103,8 +114,9 @@ class Mission:
                 "pose": None,
                 "cell": CELL_M,
                 "grid": ["".join("#" if c else "." for c in row) for row in self.grid],
-                "obstacles": [{"label": o.label, "x": o.x, "y": o.y, "n": o.n, "r_plan": o.radius(MARGIN_M),
-                               "r_block": o.radius(0.0)} for o in self.obstacles],
+                "obstacles": [{"label": o.label, "x": o.x, "y": o.y, "n": o.n, "r_plan": o.pass_radius(MARGIN_M),
+                               "r_block": o.pass_radius(0.0), "r_turn": o.turn_radius(MARGIN_M)}
+                              for o in self.obstacles],
             }
         if pose is not None:
             cx, cy = axle_to_center(pose.x, pose.y, pose.theta)
@@ -210,6 +222,7 @@ class Mission:
 
     def _send_path(self, path_id: int, start: Point, path: list[Point]) -> bool:
         path_mm = to_mm(path)
+        self._deferred_wp = None
         ack = self._send("set_path", path_id, path_mm)
         self._log_path(path_id, path_mm, ack)
         with self._lock:
@@ -252,6 +265,8 @@ class Mission:
                 outcome = "no_pose"
             elif pose.state == ROTATE:
                 outcome = "rotate"  # frame latency is a large bearing error while turning
+            elif s.cut:
+                outcome = "cut"
             elif not in_view(s):
                 outcome = "far"
             elif not in_arena(p):
@@ -285,8 +300,21 @@ class Mission:
 
     def _check_blocked(self) -> None:
         pose = self._latest_pose()
-        if self.status != "running" or pose is None or not blocked(self._remaining(pose), self.obstacles):
+        if self.status != "running" or pose is None:
             return
+        remaining = self._remaining(pose)
+        if not blocked(remaining, self.obstacles):
+            self._deferred_wp = None
+            return
+        if leg_clear(remaining[0], remaining[1], self.obstacles):
+            # Only a later leg is blocked: a stop here could be too close to a cone to turn, the
+            # waypoint never is. _check_progress calls this again when it is reached
+            if self._deferred_wp != pose.wp_idx:
+                self._deferred_wp = pose.wp_idx
+                self._event("mission_deferred", f"path_id={self.path_id} at=({pose.x:.3f}, {pose.y:.3f}) "
+                            f"wp={pose.wp_idx} obstacles={[(o.label, round(o.x, 3), round(o.y, 3), o.n) for o in self.obstacles]}")
+            return
+        self._deferred_wp = None
         ack = self._send("stop")
         if ack is not True:
             self._fail(f"stop ack={ack!r}", end_run=True)
@@ -324,6 +352,8 @@ class Mission:
         pose = self._latest_pose()
         if pose is None or pose.path_id != self.path_id:
             return  # progress of an older path is ignored
+        if self.status == "running" and self._deferred_wp is not None and pose.wp_idx != self._deferred_wp:
+            self._check_blocked()
         if self.status in ("running", "stopping") and pose.state == ARRIVED and pose.wp_idx == len(self.path) - 1:
             self._arrived("pose")
         elif self.status == "stopping" and pose.state == IDLE_STATE:

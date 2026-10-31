@@ -10,7 +10,7 @@ from capture import Capture
 from detections import Box, Frame
 
 MODELS = Path("/app/models")
-LABELS = ("box",)
+LABELS = ("cone",)
 THRESHOLD = 0.5
 IOU = 0.2
 MAX_BOXES = 10
