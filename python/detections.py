@@ -7,15 +7,16 @@ from planner import ASSOCIATION_RADIUS_M
 F_PX = 907.0
 CX_PX = 640.0
 CY_PX = 360.0
-FRAME_H_PX = 720
-BOTTOM_MARGIN_PX = 720 / 160  # one model pixel: a box this close to the bottom touches it
+FRAME_W_PX = 1280
+SIDE_MARGIN_PX = 2 * 1280 / 160  # two model pixels: a box this close to a side is cut off by it
+MIN_VISIBLE = 0.75  # a side-cut box showing less of the base width than this has no usable edges
 CAMERA_X_M = 0.17  # lens, ahead of the axle
 LENS_HEIGHT_M = 0.0545  # above the floor
 D_MAX_M = 0.7  # farthest depth Z kept
 CONFIRM_FRAMES = 3  # consecutive inference frames at the same spot before a sighting counts
 
-# (height, depth) of each class, measured with a caliper (box on Day 4)
-CLASS_SIZE_M = {"box": (0.0752, 0.0802)}
+# (height, depth) of each class: 152 mm is three of the four cones (the other is 154 mm), 70 mm the widest base
+CLASS_SIZE_M = {"cone": (0.152, 0.070)}
 
 ARENA_W_M, ARENA_H_M = 2.0, 1.5
 
@@ -41,24 +42,30 @@ class Sighting:
     bearing: float  # from the optical axis, rad, left positive
     x: float  # footprint center in the axle frame, m
     y: float
+    cut: bool = False  # cut off by a side of the frame, too much to place
 
 
 def locate(label: str, x0: float, y0: float, x1: float, y1: float) -> Sighting:
     """A box in 1280 x 720 frame pixels -> its obstacle in the axle frame."""
     height, depth = CLASS_SIZE_M[label]
-    if y1 >= FRAME_H_PX - BOTTOM_MARGIN_PX and y0 < CY_PX:
-        # Bottom cut off: the top edge, above the lens, gives the depth. With the top cut off too
-        # (y0 = 0) this is 0.052 m for the box, the farthest it can be
-        z = F_PX * (height - LENS_HEIGHT_M) / (CY_PX - y0)
-    else:
-        z = F_PX * height / (y1 - y0)
-    bearing = math.atan((CX_PX - (x0 + x1) / 2) / F_PX)
+    z = F_PX * height / (y1 - y0)
+    if y1 > CY_PX:
+        # Up close the top leaves the frame and h is cut short, so z reads too far. The floor point
+        # under the base gives a depth that far away reads much farther than h: the nearer one holds
+        z = min(z, F_PX * LENS_HEIGHT_M / (y1 - CY_PX))
+    width = F_PX * depth / z
+    left, right = x0 <= SIDE_MARGIN_PX, x1 >= FRAME_W_PX - SIDE_MARGIN_PX
+    u = (x0 + x1) / 2
+    if left != right:  # only the edge inside the frame is real: the center is half a base from it
+        u = x1 - width / 2 if left else x0 + width / 2
+    cut = left != right and x1 - x0 < MIN_VISIBLE * width
+    bearing = math.atan((CX_PX - u) / F_PX)
     fx, fy = CAMERA_X_M + z, z * math.tan(bearing)
-    return Sighting(label, z, bearing, fx + depth / 2 * math.cos(bearing), fy + depth / 2 * math.sin(bearing))
+    return Sighting(label, z, bearing, fx + depth / 2 * math.cos(bearing), fy + depth / 2 * math.sin(bearing), cut)
 
 
 def in_view(s: Sighting) -> bool:
-    return s.z <= D_MAX_M
+    return s.z <= D_MAX_M and not s.cut
 
 
 def to_arena(x: float, y: float, theta: float, s: Sighting) -> tuple[float, float]:

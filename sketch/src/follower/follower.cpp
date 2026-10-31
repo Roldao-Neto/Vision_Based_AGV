@@ -81,7 +81,7 @@ namespace follower
 
     bool active(const State &s)
     {
-        return s.phase == kRotate || s.phase == kDrive;
+        return s.phase == kRotate || s.phase == kLook || s.phase == kDrive;
     }
 
     void stop(State &s)
@@ -114,12 +114,24 @@ namespace follower
             if (s.stopping) {
                 s.phase = kIdle;
             } else {
-                begin_drive(s, c, p);
+                s.phase = kLook;
+                s.look_left = c.look;
             }
             return Command{};
         }
         s.speed = step.speed;
         return Command{0.0f, 0.0f, s.turn_dir * step.speed, s.turn_dir * step.accel};
+    }
+
+    static Command tick_look(State &s, const Config &c, const odometry::State &p, float dt)
+    {
+        s.look_left -= dt;
+        if (s.stopping) {
+            s.phase = kIdle;
+        } else if (s.look_left <= 0.0f) {
+            begin_drive(s, c, p);
+        }
+        return Command{};
     }
 
     static Command tick_drive(State &s, const Config &c, const odometry::State &p, bool stopped, float dt)
@@ -174,6 +186,9 @@ namespace follower
     {
         if (s.phase == kRotate) {
             return tick_rotate(s, c, p, stopped, dt);
+        }
+        if (s.phase == kLook) {
+            return tick_look(s, c, p, dt);
         }
         if (s.phase == kDrive) {
             return tick_drive(s, c, p, stopped, dt);

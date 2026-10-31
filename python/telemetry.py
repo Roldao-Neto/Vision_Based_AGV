@@ -18,7 +18,7 @@ HOOK_HEADER = ["rx_monotonic", "t_ms", "hook_us"]
 POSE_HEADER = ["rx_monotonic", "t_ms", "x", "y", "theta", "state", "path_id", "wp_idx", "offset_s", "delay_ms", "t_linux"]
 PATHS_HEADER = ["rx_monotonic", "path_id", "waypoints", "xy_mm", "ack"]
 # Every box of every inferred frame: the pose matched to the frame (empty without one), the
-# geometry, and what happened to it (no_pose, rotate, far, outside, seen, confirmed)
+# geometry, and what happened to it (no_pose, rotate, cut, far, outside, seen, confirmed)
 DETECTIONS_HEADER = ["rx_monotonic", "frame_t", "pose_t", "pose_x", "pose_y", "pose_theta", "pose_state", "path_id", "label", "score", "x0", "y0", "x1", "y1", "z", "bearing", "axle_x", "axle_y", "arena_x", "arena_y", "outcome"]
 OBSTACLES_HEADER = ["rx_monotonic", "index", "label", "x", "y", "n"]  # the whole list after every change
 RUN_END_HEADER = ["rx_monotonic", "t_ms", "record_id", "mode", "duration_ms", "reason", "p1", "p2", "p3", "p4", "counts_l", "counts_r", "errors_l", "errors_r", "samples", "x0_um", "y0_um", "th0_urad", "x_um", "y_um", "th_urad", "m_per_count_l_pm", "m_per_count_r_pm", "track_nm"]

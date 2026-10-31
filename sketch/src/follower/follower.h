@@ -15,6 +15,7 @@ namespace follower
         kRotate = 1,
         kDrive = 2,
         kArrived = 3, // stopped at the last waypoint
+        kLook = 4,    // stopped after ROTATE, so the camera can confirm what the turn revealed
     };
 
     struct Config
@@ -27,6 +28,7 @@ namespace follower
         float heading_stop; // rad: below this heading error |ω| only ramps down
         float freeze;       // m: within this distance of the waypoint the aim stops following it
         float realign;      // rad: a larger heading error while driving stops and rotates again
+        float look;         // s: stopped after every ROTATE before DRIVE
         heading_pi::Config heading;
     };
 
@@ -55,6 +57,7 @@ namespace follower
         // ROTATE: absolute (not wrapped) target heading and direction (+1 CCW)
         double turn_target = 0.0;
         float turn_dir = 1.0f;
+        float look_left = 0.0f; // LOOK: s still to wait
     };
 
     // Wraps an angle to [−π, π].
@@ -71,11 +74,12 @@ namespace follower
     // Ends the path at once (emergency, encoder guard, heartbeat); the caller coasts or brakes.
     void abort(State &s);
 
-    // True while the robot follows the path (ROTATE or DRIVE).
+    // True while the robot follows the path (ROTATE, LOOK or DRIVE).
     bool active(const State &s);
 
     // One tick from the pose p, stopped = both wheels without a count (drive::stopped()), dt the
-    // measured tick (s). Stops at every waypoint and rotates toward the next; after the last
-    // one the phase is kArrived. Returns the zero command once the path has ended.
+    // measured tick (s). Stops at every waypoint, rotates toward the next and looks before
+    // driving; after the last one the phase is kArrived. Returns the zero command once the path
+    // has ended.
     Command tick(State &s, const Config &c, const odometry::State &p, bool stopped, float dt);
 }

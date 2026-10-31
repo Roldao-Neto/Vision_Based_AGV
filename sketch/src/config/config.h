@@ -105,6 +105,7 @@ namespace config
         0.05235988f,                                       // heading_stop, 3°
         0.10f,                                             // freeze, m
         0.5235988f,                                        // realign, 30°
+        1.0f,                                              // look, s: 3 frames at ~5 frames/s, ~0.25 s old: ~0.85 s
         {2.3f, 1.0f, 0.5f},                                // heading PI
     };
 

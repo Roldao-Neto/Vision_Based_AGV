@@ -50,7 +50,7 @@ PAGE = """<!doctype html>
 </div>
 <script>
 const W = 2.0, H = 1.5;
-const STATES = ["IDLE", "ROTATE", "DRIVE", "ARRIVED"];
+const STATES = ["IDLE", "ROTATE", "DRIVE", "ARRIVED", "LOOK"];
 const cv = document.getElementById("arena"), ctx = cv.getContext("2d");
 const s = cv.width / W;
 const px = (x, y) => [x * s, cv.height - y * s];  // arena frame: y up
@@ -144,7 +144,7 @@ def preview(capture: Capture, detector: Detector) -> Iterator[bytes]:
         for b in inferred.boxes if inferred is not None else []:
             p0, p1 = (round(b.x0 * s), round(b.y0 * s)), (round(b.x1 * s), round(b.y1 * s))
             seen = locate(b.label, b.x0, b.y0, b.x1, b.y1)
-            # Red within d_max, grey beyond it
+            # Red within d_max, grey beyond it or too cut off to place
             color = (0, 0, 255) if in_view(seen) else (160, 160, 160)
             cv2.rectangle(small, p0, p1, color, 2)
             cv2.putText(small, f"{b.label} {b.score:.2f} Z={seen.z:.2f} y={seen.y:+.2f}",

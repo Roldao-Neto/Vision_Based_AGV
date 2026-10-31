@@ -17,8 +17,8 @@ X_MAX = 2.0 - ROTATION_RADIUS_M - MARGIN_M  # 1.774
 Y_MIN = ROTATION_RADIUS_M + MARGIN_M  # 0.226
 Y_MAX = 1.5 - ROTATION_RADIUS_M - MARGIN_M  # 1.274
 
-# Circumscribed radius of each class footprint (center to farthest corner)
-FOOTPRINT_RADIUS_M = {"box": math.hypot(0.0802, 0.0802) / 2}  # 80.2 x 80.2 mm base: 56.7 mm
+# Circumscribed radius of each class footprint (center to farthest point)
+FOOTPRINT_RADIUS_M = {"cone": 0.035}  # the widest of the four cones (base 68.6-70.0 mm across)
 
 ASSOCIATION_RADIUS_M = 0.20  # same class within this = same obstacle; revisited on Day 5–6
 
@@ -161,6 +161,11 @@ def plan(start: Point, goal: Point, obstacles: list[Obstacle], last_leg: float =
     if cells is None:
         return None
     return simplify([start, *map(cell_center, cells[1:-1]), goal], obstacles, last_leg)[1:]
+
+
+def leg_clear(p: Point, w: Point, obstacles: list[Obstacle]) -> bool:
+    """The robot can still drive from p to the waypoint w, and a replan can start there."""
+    return not _hits(p, w, obstacles, 0.0) and can_turn(w, obstacles)
 
 
 def blocked(path: list[Point], obstacles: list[Obstacle]) -> bool:
