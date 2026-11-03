@@ -2,6 +2,10 @@
 
 Undergraduate thesis (TCC, Engenharia de Computação, Unifei). A differential-drive robot on an **Arduino UNO Q** drives from a fixed start A to a fixed goal B in a 2 × 1.5 m arena. It localizes **only by wheel odometry** and uses a camera to detect obstacles, which it adds to an occupancy grid before replanning a collision-free path.
 
+
+https://github.com/user-attachments/assets/7f4b7a15-2a04-4fca-b0ec-8168a7c92224
+
+
 ## Hardware
 
 | Part | Model |
